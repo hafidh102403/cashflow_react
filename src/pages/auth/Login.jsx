@@ -1,14 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
+  LockKeyhole,
+  Mail,
+  Wallet,
   Eye,
   EyeOff,
-  Wallet,
-  Lock,
-  Mail,
   AlertCircle,
-  X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 import {
   getUsers,
@@ -19,65 +18,42 @@ import {
 function Login() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
 
   const [showPassword, setShowPassword] =
     useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-  /* =====================================================
-     AUTO HIDE ERROR
-  ===================================================== */
-
-  useEffect(() => {
-    if (!error) return;
-
-    const timer = setTimeout(() => {
-      setError("");
-    }, 4000);
-
-    return () => clearTimeout(timer);
-  }, [error]);
-
-  /* =====================================================
-     LOGIN
-  ===================================================== */
-
-  function handleSubmit(event) {
+  function handleLogin(event) {
     event.preventDefault();
 
     setError("");
-
-    if (!email.trim() || !password) {
-      setError(
-        "Silakan masukkan email dan password terlebih dahulu."
-      );
-
-      return;
-    }
-
     setLoading(true);
+
+    const cleanEmail =
+      email.trim().toLowerCase();
 
     const users = getUsers();
 
     const user = users.find(
       (item) =>
         item.email?.toLowerCase() ===
-          email.trim().toLowerCase() &&
+          cleanEmail &&
         item.password === password
     );
 
-    /* ===================================================
-       LOGIN GAGAL
-    =================================================== */
-
     if (!user) {
       setError(
-        "Email atau password yang kamu masukkan salah."
+        "Email atau password salah."
       );
 
       setLoading(false);
@@ -85,83 +61,34 @@ function Login() {
       return;
     }
 
-    /* ===================================================
-       SIMPAN USER LOGIN
-    =================================================== */
+    /*
+      Simpan user yang sedang login
+    */
 
     setCurrentUser(user);
 
-    /* ===================================================
-       INITIALIZE DATA USER
-    =================================================== */
+    /*
+      Pastikan user memiliki data
+      keuangan sendiri.
+
+      User baru otomatis:
+      income    []
+      expense   []
+      savings   []
+      debt      []
+    */
 
     initializeUserData(user.id);
 
-    /* ===================================================
-       MASUK DASHBOARD
-    =================================================== */
+    setLoading(false);
 
     navigate("/dashboard", {
       replace: true,
     });
-
-    setLoading(false);
-  }
-
-  /* =====================================================
-     CLOSE ERROR
-  ===================================================== */
-
-  function closeError() {
-    setError("");
   }
 
   return (
     <div className="login-page">
-
-      {/* =================================================
-          ERROR TOAST
-      ================================================= */}
-
-      {error && (
-        <div className="login-toast-container">
-
-          <div className="login-toast">
-
-            <div className="login-toast-icon">
-              <AlertCircle size={18} />
-            </div>
-
-            <div className="login-toast-content">
-
-              <strong>
-                Login Gagal
-              </strong>
-
-              <span>
-                {error}
-              </span>
-
-            </div>
-
-            <button
-              type="button"
-              className="login-toast-close"
-              onClick={closeError}
-              aria-label="Tutup pesan"
-            >
-              <X size={16} />
-            </button>
-
-          </div>
-
-        </div>
-      )}
-
-
-      {/* =================================================
-          LOGIN CARD
-      ================================================= */}
 
       <div className="login-card">
 
@@ -170,25 +97,8 @@ function Login() {
         ================================================= */}
 
         <div className="login-logo">
-
-          <div className="login-logo-icon">
-            <Wallet size={24} />
-          </div>
-
-          <div>
-
-            <h1>
-              Cash Flow
-            </h1>
-
-            <p>
-              Financial Management System
-            </p>
-
-          </div>
-
+          <Wallet size={22} />
         </div>
-
 
         {/* =================================================
             HEADER
@@ -196,28 +106,42 @@ function Login() {
 
         <div className="login-header">
 
-          <h2>
-            Selamat Datang
-          </h2>
+          <h1>
+            Welcome Back
+          </h1>
 
           <p>
-            Silakan masuk ke akun kamu.
+            Login ke Cash Flow untuk
+            mengelola keuangan kamu.
           </p>
 
         </div>
 
+        {/* =================================================
+            ERROR
+        ================================================= */}
+
+        {error && (
+          <div className="login-error">
+
+            <AlertCircle size={15} />
+
+            <span>
+              {error}
+            </span>
+
+          </div>
+        )}
 
         {/* =================================================
             FORM
         ================================================= */}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleLogin}>
 
-          {/* =================================================
-              EMAIL
-          ================================================= */}
+          {/* EMAIL */}
 
-          <div className="login-form-group">
+          <div className="login-field">
 
             <label>
               Email
@@ -225,7 +149,7 @@ function Login() {
 
             <div className="login-input-wrapper">
 
-              <Mail size={17} />
+              <Mail size={15} />
 
               <input
                 type="email"
@@ -236,6 +160,7 @@ function Login() {
                     event.target.value
                   )
                 }
+                autoComplete="email"
                 required
               />
 
@@ -243,12 +168,9 @@ function Login() {
 
           </div>
 
+          {/* PASSWORD */}
 
-          {/* =================================================
-              PASSWORD
-          ================================================= */}
-
-          <div className="login-form-group">
+          <div className="login-field">
 
             <label>
               Password
@@ -256,7 +178,7 @@ function Login() {
 
             <div className="login-input-wrapper">
 
-              <Lock size={17} />
+              <LockKeyhole size={15} />
 
               <input
                 type={
@@ -271,6 +193,7 @@ function Login() {
                     event.target.value
                   )
                 }
+                autoComplete="current-password"
                 required
               />
 
@@ -279,7 +202,8 @@ function Login() {
                 className="login-password-toggle"
                 onClick={() =>
                   setShowPassword(
-                    (prev) => !prev
+                    (previous) =>
+                      !previous
                   )
                 }
                 aria-label={
@@ -289,9 +213,9 @@ function Login() {
                 }
               >
                 {showPassword ? (
-                  <EyeOff size={17} />
+                  <EyeOff size={15} />
                 ) : (
-                  <Eye size={17} />
+                  <Eye size={15} />
                 )}
               </button>
 
@@ -299,22 +223,29 @@ function Login() {
 
           </div>
 
-
-          {/* =================================================
-              LOGIN BUTTON
-          ================================================= */}
+          {/* LOGIN BUTTON */}
 
           <button
             type="submit"
-            className="login-submit-button"
+            className="login-button"
             disabled={loading}
           >
             {loading
               ? "Memproses..."
-              : "Masuk"}
+              : "Login"}
           </button>
 
         </form>
+
+       
+
+        {/* =================================================
+            FOOTER
+        ================================================= */}
+
+        <div className="login-footer">
+          Cash Flow · Financial Management System
+        </div>
 
       </div>
 
