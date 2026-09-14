@@ -69,7 +69,6 @@ function Income() {
   const [transactions, setTransactions] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-
       return saved ? JSON.parse(saved) : initialData;
     } catch {
       return initialData;
@@ -89,7 +88,7 @@ function Income() {
   });
 
   /* =====================================================
-     SIMPAN KE LOCAL STORAGE
+     SIMPAN DATA
   ===================================================== */
 
   useEffect(() => {
@@ -124,7 +123,7 @@ function Income() {
   }, [transactions, search]);
 
   /* =====================================================
-     SUMMARY
+     TOTAL
   ===================================================== */
 
   const totalIncome = useMemo(() => {
@@ -135,7 +134,7 @@ function Income() {
   }, [transactions]);
 
   /* =====================================================
-     OPEN ADD MODAL
+     TAMBAH
   ===================================================== */
 
   function openAddModal() {
@@ -153,7 +152,7 @@ function Income() {
   }
 
   /* =====================================================
-     OPEN EDIT MODAL
+     EDIT
   ===================================================== */
 
   function openEditModal(item) {
@@ -171,7 +170,7 @@ function Income() {
   }
 
   /* =====================================================
-     CLOSE MODAL
+     TUTUP
   ===================================================== */
 
   function closeModal() {
@@ -180,7 +179,7 @@ function Income() {
   }
 
   /* =====================================================
-     FORM CHANGE
+     FORM
   ===================================================== */
 
   function handleChange(event) {
@@ -193,7 +192,7 @@ function Income() {
   }
 
   /* =====================================================
-     SAVE
+     SIMPAN
   ===================================================== */
 
   function handleSubmit(event) {
@@ -254,7 +253,7 @@ function Income() {
   }
 
   /* =====================================================
-     DELETE
+     HAPUS
   ===================================================== */
 
   function handleDelete(id) {
@@ -287,6 +286,7 @@ function Income() {
         </div>
 
         <button
+          type="button"
           className="transaction-add-button income-button"
           onClick={openAddModal}
         >
@@ -295,7 +295,6 @@ function Income() {
         </button>
 
       </div>
-
 
       {/* =================================================
           SUMMARY
@@ -319,7 +318,6 @@ function Income() {
 
         </div>
 
-
         <div className="transaction-summary-card">
 
           <div className="transaction-summary-icon neutral-icon">
@@ -338,14 +336,11 @@ function Income() {
 
       </div>
 
-
       {/* =================================================
-          TABLE CARD
+          TABLE
       ================================================= */}
 
       <div className="transaction-card">
-
-        {/* TOOLBAR */}
 
         <div className="transaction-toolbar">
 
@@ -366,15 +361,11 @@ function Income() {
 
         </div>
 
-
-        {/* TABLE */}
-
         <div className="transaction-table-wrapper">
 
           <table className="transaction-table">
 
             <thead>
-
               <tr>
                 <th>TANGGAL</th>
                 <th>TRANSAKSI</th>
@@ -383,7 +374,6 @@ function Income() {
                 <th>DESKRIPSI</th>
                 <th>AKSI</th>
               </tr>
-
             </thead>
 
             <tbody>
@@ -395,15 +385,10 @@ function Income() {
                   <tr key={item.id}>
 
                     <td>
-
                       <div className="transaction-date">
-
                         <CalendarDays size={12} />
-
                         {formatDate(item.date)}
-
                       </div>
-
                     </td>
 
                     <td>
@@ -413,19 +398,15 @@ function Income() {
                     </td>
 
                     <td>
-
                       <span className="transaction-category">
                         {item.category}
                       </span>
-
                     </td>
 
                     <td>
-
                       <strong className="income-value">
                         + {formatRupiah(item.amount)}
                       </strong>
-
                     </td>
 
                     <td>
@@ -437,6 +418,7 @@ function Income() {
                       <div className="transaction-actions">
 
                         <button
+                          type="button"
                           className="transaction-edit-button"
                           onClick={() =>
                             openEditModal(item)
@@ -447,6 +429,7 @@ function Income() {
                         </button>
 
                         <button
+                          type="button"
                           className="transaction-delete-button"
                           onClick={() =>
                             handleDelete(item.id)
@@ -497,21 +480,26 @@ function Income() {
 
       </div>
 
-
       {/* =================================================
           MODAL
       ================================================= */}
 
       {modalOpen && (
 
-        <div className="transaction-modal-overlay">
+        <div className="income-modal-overlay">
 
-          <div className="transaction-modal">
+          <div
+            className="income-modal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
 
-            <div className="transaction-modal-header">
+            {/* HEADER */}
+
+            <div className="income-modal-header">
 
               <div>
-
                 <h2>
                   {editingId
                     ? "Edit Pemasukan"
@@ -521,98 +509,129 @@ function Income() {
                 <p>
                   Masukkan informasi transaksi.
                 </p>
-
               </div>
 
               <button
-                className="transaction-modal-close"
+                type="button"
+                className="income-modal-close"
                 onClick={closeModal}
+                aria-label="Tutup"
               >
-                <X size={17} />
+                <X size={19} />
               </button>
 
             </div>
 
+            {/* FORM */}
 
-            <form onSubmit={handleSubmit}>
+            <form
+              className="income-modal-form"
+              onSubmit={handleSubmit}
+            >
 
-              <div className="transaction-form-grid">
+              <div className="income-form-grid">
 
-                <div className="transaction-form-group">
+                {/* NAMA */}
 
-                  <label>
+                <div className="income-form-group">
+
+                  <label htmlFor="income-title">
                     Nama Transaksi
                   </label>
 
                   <input
+                    id="income-title"
                     name="title"
                     type="text"
                     placeholder="Contoh: Gaji Bulanan"
                     value={form.title}
                     onChange={handleChange}
+                    autoComplete="off"
                   />
 
                 </div>
 
+                {/* KATEGORI */}
 
-                <div className="transaction-form-group">
+                <div className="income-form-group">
 
-                  <label>
+                  <label htmlFor="income-category">
                     Kategori
                   </label>
 
                   <input
+                    id="income-category"
                     name="category"
                     type="text"
                     placeholder="Contoh: Gaji"
                     value={form.category}
                     onChange={handleChange}
+                    autoComplete="off"
                   />
 
                 </div>
 
+                {/* TANGGAL */}
 
-                <div className="transaction-form-group">
+                <div className="income-form-group">
 
-                  <label>
+                  <label htmlFor="income-date">
                     Tanggal
                   </label>
 
-                  <input
-                    name="date"
-                    type="date"
-                    value={form.date}
-                    onChange={handleChange}
-                  />
+                  <div className="income-date-input">
+
+                    <CalendarDays size={16} />
+
+                    <input
+                      id="income-date"
+                      name="date"
+                      type="date"
+                      value={form.date}
+                      onChange={handleChange}
+                    />
+
+                  </div>
 
                 </div>
 
+                {/* NOMINAL */}
 
-                <div className="transaction-form-group">
+                <div className="income-form-group">
 
-                  <label>
+                  <label htmlFor="income-amount">
                     Nominal
                   </label>
 
-                  <input
-                    name="amount"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={form.amount}
-                    onChange={handleChange}
-                  />
+                  <div className="income-amount-input">
+
+                    <span>Rp</span>
+
+                    <input
+                      id="income-amount"
+                      name="amount"
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="0"
+                      value={form.amount}
+                      onChange={handleChange}
+                    />
+
+                  </div>
 
                 </div>
 
+                {/* DESKRIPSI */}
 
-                <div className="transaction-form-group full">
+                <div className="income-form-group income-form-full">
 
-                  <label>
+                  <label htmlFor="income-description">
                     Deskripsi
                   </label>
 
                   <textarea
+                    id="income-description"
                     name="description"
                     rows="3"
                     placeholder="Tambahkan deskripsi..."
@@ -624,12 +643,13 @@ function Income() {
 
               </div>
 
+              {/* FOOTER */}
 
-              <div className="transaction-modal-footer">
+              <div className="income-modal-footer">
 
                 <button
                   type="button"
-                  className="transaction-cancel-button"
+                  className="income-cancel-button"
                   onClick={closeModal}
                 >
                   Batal
@@ -637,7 +657,7 @@ function Income() {
 
                 <button
                   type="submit"
-                  className="transaction-save-button income-save-button"
+                  className="income-save-button"
                 >
                   {editingId
                     ? "Simpan Perubahan"

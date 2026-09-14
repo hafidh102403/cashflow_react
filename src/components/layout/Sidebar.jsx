@@ -8,20 +8,20 @@ import {
   HandCoins,
   FileText,
   UserPlus,
+  Users,
   X,
   CircleDollarSign,
 } from "lucide-react";
 
+import { getCurrentUser } from "../../utils/storage";
 
-const menuGroups = [
+/* =========================================================
+   USER MENU
+========================================================= */
 
-  /* =========================================================
-     MENU UTAMA
-  ========================================================= */
-
+const userMenuGroups = [
   {
     title: "MENU UTAMA",
-
     items: [
       {
         label: "Dashboard",
@@ -31,21 +31,14 @@ const menuGroups = [
     ],
   },
 
-
-  /* =========================================================
-     TRANSAKSI
-  ========================================================= */
-
   {
     title: "TRANSAKSI",
-
     items: [
       {
         label: "Pemasukan",
         path: "/pemasukan",
         icon: ArrowDownToLine,
       },
-
       {
         label: "Pengeluaran",
         path: "/pengeluaran",
@@ -54,21 +47,14 @@ const menuGroups = [
     ],
   },
 
-
-  /* =========================================================
-     KEUANGAN
-  ========================================================= */
-
   {
     title: "KEUANGAN",
-
     items: [
       {
         label: "Tabungan",
         path: "/tabungan",
         icon: PiggyBank,
       },
-
       {
         label: "Utang Piutang",
         path: "/utang-piutang",
@@ -77,14 +63,8 @@ const menuGroups = [
     ],
   },
 
-
-  /* =========================================================
-     LAPORAN
-  ========================================================= */
-
   {
     title: "LAPORAN",
-
     items: [
       {
         label: "Laporan",
@@ -93,16 +73,33 @@ const menuGroups = [
       },
     ],
   },
+];
 
+/* =========================================================
+   ADMIN MENU
+========================================================= */
 
-  /* =========================================================
-     ADMIN
-  ========================================================= */
+const adminMenuGroups = [
+  {
+    title: "MENU UTAMA",
+    items: [
+      {
+        label: "Dashboard",
+        path: "/dashboard",
+        icon: LayoutDashboard,
+      },
+    ],
+  },
 
   {
     title: "ADMIN",
-
     items: [
+      {
+        label: "Monitoring User",
+        path: "/monitoring-user",
+        icon: Users,
+      },
+
       {
         label: "Input User",
         path: "/input-user",
@@ -110,10 +107,36 @@ const menuGroups = [
       },
     ],
   },
+
+  {
+    title: "LAPORAN",
+    items: [
+      {
+        label: "Laporan",
+        path: "/laporan",
+        icon: FileText,
+      },
+    ],
+  },
 ];
 
+function Sidebar({
+  isOpen,
+  onClose,
+}) {
+  const currentUser = getCurrentUser();
 
-function Sidebar({ isOpen, onClose }) {
+  const isAdmin = currentUser?.role === "admin";
+
+  const menuGroups = isAdmin
+    ? adminMenuGroups
+    : userMenuGroups;
+
+  const userName = currentUser?.name || "User";
+
+  const roleName = isAdmin
+    ? "Administrator"
+    : "Personal Account";
 
   return (
     <aside
@@ -124,6 +147,7 @@ function Sidebar({ isOpen, onClose }) {
 
       {/* =====================================================
           SIDEBAR HEADER
+          TINGGI SAMA DENGAN NAVBAR
       ===================================================== */}
 
       <div className="sidebar-header">
@@ -132,10 +156,10 @@ function Sidebar({ isOpen, onClose }) {
 
           <div className="brand-logo">
             <CircleDollarSign
-              size={21}
+              size={20}
+              strokeWidth={2}
             />
           </div>
-
 
           <div className="brand-content">
 
@@ -151,91 +175,69 @@ function Sidebar({ isOpen, onClose }) {
 
         </div>
 
-
-        {/* MOBILE CLOSE */}
-
         <button
           className="sidebar-close"
           onClick={onClose}
           aria-label="Close sidebar"
         >
-          <X size={19} />
+          <X size={18} />
         </button>
 
       </div>
 
-
       {/* =====================================================
-          SIDEBAR MENU
+          MENU
       ===================================================== */}
 
       <div className="sidebar-menu">
 
-        {menuGroups.map(
-          (group) => (
+        {menuGroups.map((group) => (
+          <div
+            className="menu-group"
+            key={group.title}
+          >
 
-            <div
-              className="menu-group"
-              key={group.title}
-            >
+            <div className="menu-title">
+              {group.title}
+            </div>
 
-              {/* GROUP TITLE */}
+            <div className="menu-list">
 
-              <div className="menu-title">
-                {group.title}
-              </div>
+              {group.items.map((item) => {
 
+                const Icon = item.icon;
 
-              {/* MENU LIST */}
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      `menu-link ${
+                        isActive ? "active" : ""
+                      }`
+                    }
+                  >
 
-              <div className="menu-list">
+                    <Icon
+                      size={15}
+                      strokeWidth={2}
+                    />
 
-                {group.items.map(
-                  (item) => {
+                    <span>
+                      {item.label}
+                    </span>
 
-                    const Icon =
-                      item.icon;
-
-                    return (
-                      <NavLink
-                        key={item.path}
-                        to={item.path}
-                        onClick={onClose}
-                        className={({
-                          isActive,
-                        }) =>
-                          `menu-link ${
-                            isActive
-                              ? "active"
-                              : ""
-                          }`
-                        }
-                      >
-
-                        <Icon
-                          size={16}
-                          strokeWidth={2}
-                        />
-
-                        <span>
-                          {item.label}
-                        </span>
-
-                      </NavLink>
-                    );
-
-                  }
-                )}
-
-              </div>
+                  </NavLink>
+                );
+              })}
 
             </div>
 
-          )
-        )}
+          </div>
+        ))}
 
       </div>
-
 
       {/* =====================================================
           SIDEBAR FOOTER
@@ -246,18 +248,17 @@ function Sidebar({ isOpen, onClose }) {
         <div className="sidebar-account">
 
           <div className="account-avatar">
-            H
+            {userName.charAt(0).toUpperCase()}
           </div>
-
 
           <div className="account-info">
 
             <strong>
-              Hafidh
+              {userName}
             </strong>
 
             <span>
-              Personal Account
+              {roleName}
             </span>
 
           </div>
@@ -269,6 +270,5 @@ function Sidebar({ isOpen, onClose }) {
     </aside>
   );
 }
-
 
 export default Sidebar;

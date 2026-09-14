@@ -11,57 +11,23 @@ import {
 } from "lucide-react";
 
 const STORAGE_KEY = "cashflow_expense";
+const INCOME_STORAGE_KEY = "cashflow_income";
 
-const initialData = [
-  {
-    id: 1,
-    title: "Belanja Bulanan",
-    category: "Kebutuhan",
-    date: "2026-09-04",
-    amount: 1250000,
-    description: "Belanja kebutuhan bulanan",
-  },
-  {
-    id: 2,
-    title: "Transportasi",
-    category: "Transportasi",
-    date: "2026-09-05",
-    amount: 450000,
-    description: "Transportasi harian",
-  },
-  {
-    id: 3,
-    title: "Makan & Minum",
-    category: "Makanan",
-    date: "2026-09-08",
-    amount: 320000,
-    description: "Makan dan minum",
-  },
-  {
-    id: 4,
-    title: "Hiburan",
-    category: "Hiburan",
-    date: "2026-09-10",
-    amount: 700000,
-    description: "Kebutuhan hiburan",
-  },
-  {
-    id: 5,
-    title: "Keperluan Lain",
-    category: "Lainnya",
-    date: "2026-09-12",
-    amount: 500000,
-    description: "Keperluan lainnya",
-  },
-];
+/* =========================================================
+   FORMAT RUPIAH
+========================================================= */
 
 function formatRupiah(value) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(Number(value) || 0);
 }
+
+/* =========================================================
+   FORMAT DATE
+========================================================= */
 
 function formatDate(date) {
   if (!date) return "-";
@@ -73,20 +39,56 @@ function formatDate(date) {
   }).format(new Date(`${date}T00:00:00`));
 }
 
-function Expense() {
-  const [transactions, setTransactions] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+/* =========================================================
+   GET STORAGE DATA
+========================================================= */
 
-      return saved ? JSON.parse(saved) : initialData;
-    } catch {
-      return initialData;
+function getStorageData(key) {
+  try {
+    const saved = localStorage.getItem(key);
+
+    if (!saved) {
+      return [];
     }
+
+    const parsed = JSON.parse(saved);
+
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/* =========================================================
+   EXPENSE
+========================================================= */
+
+function Expense() {
+  /* =====================================================
+     TRANSACTIONS
+  ===================================================== */
+
+  const [transactions, setTransactions] = useState(() => {
+    return getStorageData(STORAGE_KEY);
   });
 
+  /* =====================================================
+     SEARCH
+  ===================================================== */
+
   const [search, setSearch] = useState("");
+
+  /* =====================================================
+     MODAL
+  ===================================================== */
+
   const [modalOpen, setModalOpen] = useState(false);
+
   const [editingId, setEditingId] = useState(null);
+
+  /* =====================================================
+     FORM
+  ===================================================== */
 
   const [form, setForm] = useState({
     title: "",
@@ -97,13 +99,7 @@ function Expense() {
   });
 
   /* =====================================================
-     SALDO AWAL
-  ===================================================== */
-
-  const totalSaldoAwal = 42850000;
-
-  /* =====================================================
-     SIMPAN KE LOCAL STORAGE
+     SIMPAN PENGELUARAN
   ===================================================== */
 
   useEffect(() => {
@@ -138,18 +134,38 @@ function Expense() {
   }, [transactions, search]);
 
   /* =====================================================
-     SUMMARY
+     TOTAL PENGELUARAN
   ===================================================== */
 
   const totalExpense = useMemo(() => {
     return transactions.reduce(
-      (total, item) => total + Number(item.amount),
+      (total, item) => total + Number(item.amount || 0),
       0
     );
   }, [transactions]);
 
-  const remainingBalance =
-    totalSaldoAwal - totalExpense;
+  /* =====================================================
+     TOTAL PEMASUKAN
+  ===================================================== */
+
+  const totalIncome = useMemo(() => {
+    const incomeTransactions =
+      getStorageData(INCOME_STORAGE_KEY);
+
+    return incomeTransactions.reduce(
+      (total, item) => total + Number(item.amount || 0),
+      0
+    );
+  }, [transactions]);
+
+  /* =====================================================
+     SISA SALDO
+     
+     Rumus:
+     Total Pemasukan - Total Pengeluaran
+  ===================================================== */
+
+  const remainingBalance = totalIncome - totalExpense;
 
   /* =====================================================
      OPEN ADD MODAL
@@ -177,10 +193,10 @@ function Expense() {
     setEditingId(item.id);
 
     setForm({
-      title: item.title,
-      category: item.category,
-      date: item.date,
-      amount: item.amount,
+      title: item.title || "",
+      category: item.category || "",
+      date: item.date || "",
+      amount: item.amount || "",
       description: item.description || "",
     });
 
@@ -194,6 +210,14 @@ function Expense() {
   function closeModal() {
     setModalOpen(false);
     setEditingId(null);
+
+    setForm({
+      title: "",
+      category: "",
+      date: "",
+      amount: "",
+      description: "",
+    });
   }
 
   /* =====================================================
@@ -216,6 +240,8 @@ function Expense() {
   function handleSubmit(event) {
     event.preventDefault();
 
+    /* VALIDASI */
+
     if (!form.title.trim()) {
       alert("Nama transaksi wajib diisi.");
       return;
@@ -236,6 +262,10 @@ function Expense() {
       return;
     }
 
+    /* ===================================================
+       EDIT
+    =================================================== */
+
     if (editingId) {
       setTransactions((prev) =>
         prev.map((item) =>
@@ -251,7 +281,13 @@ function Expense() {
             : item
         )
       );
-    } else {
+    }
+
+    /* ===================================================
+       ADD
+    =================================================== */
+
+    else {
       const newTransaction = {
         id: Date.now(),
         title: form.title.trim(),
@@ -286,6 +322,10 @@ function Expense() {
     );
   }
 
+  /* =====================================================
+     RENDER
+  ===================================================== */
+
   return (
     <div className="transaction-page">
 
@@ -308,7 +348,10 @@ function Expense() {
           onClick={openAddModal}
         >
           <Plus size={15} />
-          <span>Tambah Pengeluaran</span>
+
+          <span>
+            Tambah Pengeluaran
+          </span>
         </button>
 
       </div>
@@ -320,6 +363,8 @@ function Expense() {
 
       <div className="transaction-summary-grid">
 
+        {/* TOTAL PENGELUARAN */}
+
         <div className="transaction-summary-card expense-card">
 
           <div className="transaction-summary-icon">
@@ -327,15 +372,21 @@ function Expense() {
           </div>
 
           <div>
-            <span>Total Pengeluaran</span>
+
+            <span>
+              Total Pengeluaran
+            </span>
 
             <strong>
               {formatRupiah(totalExpense)}
             </strong>
+
           </div>
 
         </div>
 
+
+        {/* SISA SALDO */}
 
         <div className="transaction-summary-card">
 
@@ -344,15 +395,21 @@ function Expense() {
           </div>
 
           <div>
-            <span>Sisa Saldo</span>
+
+            <span>
+              Sisa Saldo
+            </span>
 
             <strong>
               {formatRupiah(remainingBalance)}
             </strong>
+
           </div>
 
         </div>
 
+
+        {/* JUMLAH TRANSAKSI */}
 
         <div className="transaction-summary-card">
 
@@ -361,11 +418,15 @@ function Expense() {
           </div>
 
           <div>
-            <span>Jumlah Transaksi</span>
+
+            <span>
+              Jumlah Transaksi
+            </span>
 
             <strong>
               {transactions.length}
             </strong>
+
           </div>
 
         </div>
@@ -428,6 +489,8 @@ function Expense() {
 
                   <tr key={item.id}>
 
+                    {/* TANGGAL */}
+
                     <td>
 
                       <div className="transaction-date">
@@ -440,11 +503,19 @@ function Expense() {
 
                     </td>
 
+
+                    {/* TRANSAKSI */}
+
                     <td>
+
                       <strong>
                         {item.title}
                       </strong>
+
                     </td>
+
+
+                    {/* KATEGORI */}
 
                     <td>
 
@@ -454,17 +525,28 @@ function Expense() {
 
                     </td>
 
+
+                    {/* NOMINAL */}
+
                     <td>
 
                       <strong className="expense-value">
+
                         - {formatRupiah(item.amount)}
+
                       </strong>
 
                     </td>
 
+
+                    {/* DESKRIPSI */}
+
                     <td>
                       {item.description || "-"}
                     </td>
+
+
+                    {/* AKSI */}
 
                     <td>
 
@@ -479,6 +561,7 @@ function Expense() {
                         >
                           <Pencil size={13} />
                         </button>
+
 
                         <button
                           className="transaction-delete-button"
@@ -542,6 +625,8 @@ function Expense() {
 
           <div className="transaction-modal">
 
+            {/* HEADER MODAL */}
+
             <div className="transaction-modal-header">
 
               <div>
@@ -558,9 +643,11 @@ function Expense() {
 
               </div>
 
+
               <button
                 className="transaction-modal-close"
                 onClick={closeModal}
+                type="button"
               >
                 <X size={17} />
               </button>
@@ -568,9 +655,13 @@ function Expense() {
             </div>
 
 
+            {/* FORM */}
+
             <form onSubmit={handleSubmit}>
 
               <div className="transaction-form-grid">
+
+                {/* NAMA TRANSAKSI */}
 
                 <div className="transaction-form-group">
 
@@ -589,6 +680,8 @@ function Expense() {
                 </div>
 
 
+                {/* KATEGORI */}
+
                 <div className="transaction-form-group">
 
                   <label>
@@ -606,6 +699,8 @@ function Expense() {
                 </div>
 
 
+                {/* TANGGAL */}
+
                 <div className="transaction-form-group">
 
                   <label>
@@ -621,6 +716,8 @@ function Expense() {
 
                 </div>
 
+
+                {/* NOMINAL */}
 
                 <div className="transaction-form-group">
 
@@ -639,6 +736,8 @@ function Expense() {
 
                 </div>
 
+
+                {/* DESKRIPSI */}
 
                 <div className="transaction-form-group full">
 
@@ -659,6 +758,8 @@ function Expense() {
               </div>
 
 
+              {/* FOOTER */}
+
               <div className="transaction-modal-footer">
 
                 <button
@@ -668,6 +769,7 @@ function Expense() {
                 >
                   Batal
                 </button>
+
 
                 <button
                   type="submit"

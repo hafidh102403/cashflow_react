@@ -5768,3 +5768,1148 @@ a {
     }
 
 }
+/* =========================================================
+   INCOME MODAL - SMALL & COMPACT
+========================================================= */
+
+.income-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 16px;
+
+  background: rgba(15, 23, 42, 0.42);
+
+  overflow: hidden;
+}
+
+.income-modal {
+  width: min(560px, calc(100vw - 32px));
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+
+  overflow: hidden;
+
+  animation: incomeModalShow 0.16s ease-out;
+}
+
+@keyframes incomeModalShow {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.income-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 16px 19px 14px;
+
+  border-bottom: 1px solid #e8edf3;
+
+  background: #ffffff;
+}
+
+.income-modal-header h2 {
+  margin: 0;
+
+  color: #1e293b;
+
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.income-modal-header p {
+  margin: 4px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.income-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+
+  flex-shrink: 0;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #94a3b8;
+
+  cursor: pointer;
+
+  transition: 0.15s ease;
+}
+
+.income-modal-close:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.income-modal-form {
+  width: 100%;
+}
+
+.income-form-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 13px 14px;
+
+  padding: 16px 19px 17px;
+}
+
+.income-form-group {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.income-form-full {
+  grid-column: 1 / -1;
+}
+
+.income-form-group label {
+  margin-bottom: 5px;
+
+  color: #475569;
+
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.income-form-group input,
+.income-form-group textarea {
+  width: 100%;
+
+  border: 1px solid #dbe3ed;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #1e293b;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.income-form-group input {
+  height: 40px;
+
+  padding: 0 11px;
+}
+
+.income-form-group textarea {
+  height: 64px;
+  min-height: 64px;
+
+  padding: 9px 11px;
+
+  resize: none;
+}
+
+.income-form-group input::placeholder,
+.income-form-group textarea::placeholder {
+  color: #b6c1cf;
+}
+
+.income-form-group input:focus,
+.income-form-group textarea:focus {
+  border-color: #10a37f;
+
+  box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.09);
+}
+
+
+/* =========================================================
+   TANGGAL
+========================================================= */
+
+.income-date-input {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+}
+
+.income-date-input > svg {
+  position: absolute;
+  left: 11px;
+
+  width: 14px;
+  height: 14px;
+
+  color: #7c8a9d;
+
+  pointer-events: none;
+}
+
+.income-date-input input {
+  padding-left: 34px;
+}
+
+
+/* =========================================================
+   NOMINAL
+========================================================= */
+
+.income-amount-input {
+  display: flex;
+  align-items: center;
+
+  height: 40px;
+
+  border: 1px solid #dbe3ed;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  overflow: hidden;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.income-amount-input:focus-within {
+  border-color: #10a37f;
+
+  box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.09);
+}
+
+.income-amount-input span {
+  display: flex;
+  align-items: center;
+
+  height: 100%;
+
+  padding: 0 10px;
+
+  border-right: 1px solid #e2e8f0;
+
+  background: #f8fafc;
+
+  color: #64748b;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.income-amount-input input {
+  height: 100%;
+
+  padding: 0 10px;
+
+  border: 0 !important;
+
+  border-radius: 0;
+
+  outline: none;
+
+  box-shadow: none !important;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.income-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  padding: 11px 19px;
+
+  border-top: 1px solid #e8edf3;
+
+  background: #f8fafc;
+}
+
+.income-cancel-button,
+.income-save-button {
+  height: 36px;
+
+  padding: 0 14px;
+
+  border-radius: 7px;
+
+  font-family: inherit;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.15s ease;
+}
+
+.income-cancel-button {
+  border: 1px solid #dbe3ed;
+
+  background: #ffffff;
+
+  color: #64748b;
+}
+
+.income-cancel-button:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.income-save-button {
+  border: 1px solid #059669;
+
+  background: #059669;
+
+  color: #ffffff;
+}
+
+.income-save-button:hover {
+  background: #047857;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 640px) {
+
+  .income-modal-overlay {
+    padding: 10px;
+  }
+
+  .income-modal {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .income-modal-header {
+    padding: 14px 15px 12px;
+  }
+
+  .income-modal-header h2 {
+    font-size: 16px;
+  }
+
+  .income-modal-header p {
+    font-size: 10px;
+  }
+
+  .income-form-grid {
+    grid-template-columns: 1fr;
+
+    gap: 11px;
+
+    padding: 13px 15px 14px;
+  }
+
+  .income-form-full {
+    grid-column: auto;
+  }
+
+  .income-form-group input {
+    height: 38px;
+  }
+
+  .income-form-group textarea {
+    height: 58px;
+    min-height: 58px;
+  }
+
+  .income-modal-footer {
+    padding: 10px 15px;
+  }
+
+  .income-cancel-button,
+  .income-save-button {
+    height: 35px;
+    padding: 0 12px;
+  }
+}
+/* =========================================================
+   EXPENSE MODAL - SMALL & COMPACT
+========================================================= */
+
+.transaction-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 16px;
+
+  background: rgba(15, 23, 42, 0.42);
+
+  overflow: hidden;
+}
+
+.transaction-modal {
+  width: min(560px, calc(100vw - 32px));
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+
+  overflow: hidden;
+
+  animation: expenseModalShow 0.16s ease-out;
+}
+
+@keyframes expenseModalShow {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.transaction-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 16px 19px 14px;
+
+  border-bottom: 1px solid #e8edf3;
+
+  background: #ffffff;
+}
+
+.transaction-modal-header h2 {
+  margin: 0;
+
+  color: #1e293b;
+
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.transaction-modal-header p {
+  margin: 4px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.transaction-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+
+  flex-shrink: 0;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #94a3b8;
+
+  cursor: pointer;
+
+  transition: 0.15s ease;
+}
+
+.transaction-modal-close:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.transaction-modal form {
+  width: 100%;
+}
+
+.transaction-form-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 13px 14px;
+
+  padding: 16px 19px 17px;
+}
+
+.transaction-form-group {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.transaction-form-group.full {
+  grid-column: 1 / -1;
+}
+
+.transaction-form-group label {
+  margin-bottom: 5px;
+
+  color: #475569;
+
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.transaction-form-group input,
+.transaction-form-group textarea {
+  width: 100%;
+
+  border: 1px solid #dbe3ed;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #1e293b;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.transaction-form-group input {
+  height: 40px;
+
+  padding: 0 11px;
+}
+
+.transaction-form-group textarea {
+  height: 64px;
+  min-height: 64px;
+
+  padding: 9px 11px;
+
+  resize: none;
+}
+
+.transaction-form-group input::placeholder,
+.transaction-form-group textarea::placeholder {
+  color: #b6c1cf;
+}
+
+.transaction-form-group input:focus,
+.transaction-form-group textarea:focus {
+  border-color: #ef4444;
+
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.09);
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.transaction-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  padding: 11px 19px;
+
+  border-top: 1px solid #e8edf3;
+
+  background: #f8fafc;
+}
+
+.transaction-cancel-button,
+.transaction-save-button {
+  height: 36px;
+
+  padding: 0 14px;
+
+  border-radius: 7px;
+
+  font-family: inherit;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.15s ease;
+}
+
+.transaction-cancel-button {
+  border: 1px solid #dbe3ed;
+
+  background: #ffffff;
+
+  color: #64748b;
+}
+
+.transaction-cancel-button:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.transaction-save-button {
+  border: 1px solid #dc2626;
+
+  background: #dc2626;
+
+  color: #ffffff;
+}
+
+.transaction-save-button:hover {
+  background: #b91c1c;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 640px) {
+
+  .transaction-modal-overlay {
+    padding: 10px;
+  }
+
+  .transaction-modal {
+    width: 100%;
+
+    border-radius: 12px;
+  }
+
+  .transaction-modal-header {
+    padding: 14px 15px 12px;
+  }
+
+  .transaction-modal-header h2 {
+    font-size: 16px;
+  }
+
+  .transaction-modal-header p {
+    font-size: 10px;
+  }
+
+  .transaction-form-grid {
+    grid-template-columns: 1fr;
+
+    gap: 11px;
+
+    padding: 13px 15px 14px;
+  }
+
+  .transaction-form-group.full {
+    grid-column: auto;
+  }
+
+  .transaction-form-group input {
+    height: 38px;
+  }
+
+  .transaction-form-group textarea {
+    height: 58px;
+    min-height: 58px;
+  }
+
+  .transaction-modal-footer {
+    padding: 10px 15px;
+  }
+
+  .transaction-cancel-button,
+  .transaction-save-button {
+    height: 35px;
+
+    padding: 0 12px;
+  }
+}
+/* =========================================================
+   LOGIN TOAST
+========================================================= */
+
+.login-toast-container {
+  position: fixed;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+
+  width: min(420px, calc(100vw - 32px));
+
+  pointer-events: none;
+}
+
+.login-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+
+  padding: 13px 14px;
+
+  background: #ffffff;
+
+  border: 1px solid #fecaca;
+
+  border-radius: 12px;
+
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.14);
+
+  animation:
+    loginToastSlideDown
+    0.25s ease-out;
+
+  pointer-events: auto;
+}
+
+.login-toast-icon {
+  width: 34px;
+  height: 34px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #dc2626;
+
+  background: #fef2f2;
+
+  border-radius: 9px;
+}
+
+.login-toast-content {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+
+  flex: 1;
+}
+
+.login-toast-content strong {
+  font-size: 13px;
+  font-weight: 700;
+
+  color: #111827;
+}
+
+.login-toast-content span {
+  font-size: 12px;
+  line-height: 1.45;
+
+  color: #64748b;
+}
+
+.login-toast-close {
+  width: 28px;
+  height: 28px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #94a3b8;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.login-toast-close:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes loginToastSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  .login-toast-container {
+    top: 14px;
+
+    width: calc(100vw - 24px);
+  }
+
+  .login-toast {
+    padding: 11px 12px;
+  }
+
+  .login-toast-icon {
+    width: 32px;
+    height: 32px;
+  }
+}
+/* =========================================================
+   LOGOUT CONFIRMATION TOAST
+========================================================= */
+
+.logout-toast-wrapper {
+  position: fixed;
+
+  top: 18px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  width: min(520px, calc(100vw - 32px));
+
+  z-index: 99999;
+
+  pointer-events: none;
+}
+
+.logout-toast {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  width: 100%;
+
+  padding: 13px 14px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 13px;
+
+  box-shadow:
+    0 14px 35px rgba(15, 23, 42, 0.16);
+
+  animation:
+    logoutToastSlideDown
+    0.25s ease-out;
+
+  pointer-events: auto;
+}
+
+
+/* =========================================================
+   ICON
+========================================================= */
+
+.logout-toast-icon {
+  width: 36px;
+  height: 36px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #2563eb;
+
+  background: #eff6ff;
+
+  border-radius: 9px;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.logout-toast-content {
+  min-width: 0;
+
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+.logout-toast-content strong {
+  font-size: 13px;
+
+  font-weight: 700;
+
+  color: #0f172a;
+}
+
+.logout-toast-content span {
+  font-size: 11px;
+
+  color: #64748b;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   ACTION
+========================================================= */
+
+.logout-toast-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  flex-shrink: 0;
+}
+
+.logout-toast-cancel,
+.logout-toast-confirm {
+  height: 32px;
+
+  padding: 0 12px;
+
+  border: 0;
+
+  border-radius: 7px;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+/* =========================================================
+   CANCEL
+========================================================= */
+
+.logout-toast-cancel {
+  background: #f1f5f9;
+
+  color: #475569;
+}
+
+.logout-toast-cancel:hover {
+  background: #e2e8f0;
+}
+
+
+/* =========================================================
+   CONFIRM
+========================================================= */
+
+.logout-toast-confirm {
+  background: #2563eb;
+
+  color: #ffffff;
+}
+
+.logout-toast-confirm:hover {
+  background: #1d4ed8;
+}
+
+
+/* =========================================================
+   CLOSE
+========================================================= */
+
+.logout-toast-close {
+  position: absolute;
+
+  top: 6px;
+  right: 7px;
+
+  width: 22px;
+  height: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: #94a3b8;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.logout-toast-close:hover {
+  background: #f1f5f9;
+
+  color: #475569;
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes logoutToastSlideDown {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(-18px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .logout-toast-wrapper {
+    top: 12px;
+
+    width: calc(100vw - 24px);
+  }
+
+  .logout-toast {
+    align-items: flex-start;
+
+    padding: 12px;
+
+    gap: 9px;
+  }
+
+  .logout-toast-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logout-toast-actions {
+    margin-top: 2px;
+  }
+
+  .logout-toast-cancel,
+  .logout-toast-confirm {
+    height: 30px;
+
+    padding: 0 9px;
+  }
+}

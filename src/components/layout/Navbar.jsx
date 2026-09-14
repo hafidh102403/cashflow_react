@@ -8,12 +8,42 @@ import {
   ChevronDown,
   UserRound,
   LogOut,
+  AlertCircle,
+  X,
 } from "lucide-react";
+
+import {
+  getCurrentUser,
+  logoutUser,
+} from "../../utils/storage";
 
 function Navbar({ onMenuClick }) {
   const navigate = useNavigate();
 
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] =
+    useState(false);
+
+  const [logoutConfirm, setLogoutConfirm] =
+    useState(false);
+
+  /* =====================================================
+     CURRENT USER
+  ===================================================== */
+
+  const currentUser = getCurrentUser();
+
+  const isAdmin =
+    currentUser?.role === "admin";
+
+  const userName =
+    currentUser?.name || "User";
+
+  const userRole = isAdmin
+    ? "Administrator"
+    : "Personal";
+
+  const avatar =
+    userName.charAt(0).toUpperCase();
 
   /* =====================================================
      EDIT PROFILE
@@ -22,28 +52,119 @@ function Navbar({ onMenuClick }) {
   function handleEditProfile() {
     setProfileOpen(false);
 
-    // Sementara diarahkan ke halaman settings
     navigate("/settings");
   }
 
   /* =====================================================
-     LOGOUT
+     OPEN LOGOUT CONFIRMATION
   ===================================================== */
 
-  function handleLogout() {
+  function handleLogoutClick() {
     setProfileOpen(false);
+    setLogoutConfirm(true);
+  }
 
-    const confirmed = window.confirm(
-      "Apakah kamu yakin ingin logout?"
-    );
+  /* =====================================================
+     CANCEL LOGOUT
+  ===================================================== */
 
-    if (confirmed) {
-      navigate("/login");
-    }
+  function handleCancelLogout() {
+    setLogoutConfirm(false);
+  }
+
+  /* =====================================================
+     CONFIRM LOGOUT
+  ===================================================== */
+
+  function handleConfirmLogout() {
+    logoutUser();
+
+    setLogoutConfirm(false);
+
+    navigate("/login", {
+      replace: true,
+    });
   }
 
   return (
     <header className="navbar">
+
+      {/* =================================================
+          LOGOUT CONFIRMATION
+      ================================================= */}
+
+      {logoutConfirm && (
+        <div className="logout-toast-wrapper">
+
+          <div className="logout-toast">
+
+            {/* ICON */}
+
+            <div className="logout-toast-icon">
+              <AlertCircle size={19} />
+            </div>
+
+
+            {/* CONTENT */}
+
+            <div className="logout-toast-content">
+
+              <strong>
+                Keluar dari akun?
+              </strong>
+
+              <span>
+                Sesi kamu akan diakhiri.
+              </span>
+
+            </div>
+
+
+            {/* ACTION */}
+
+            <div className="logout-toast-actions">
+
+              <button
+                type="button"
+                className="logout-toast-cancel"
+                onClick={
+                  handleCancelLogout
+                }
+              >
+                Batal
+              </button>
+
+              <button
+                type="button"
+                className="logout-toast-confirm"
+                onClick={
+                  handleConfirmLogout
+                }
+              >
+                Logout
+              </button>
+
+            </div>
+
+
+            {/* CLOSE */}
+
+            <button
+              type="button"
+              className="logout-toast-close"
+              onClick={
+                handleCancelLogout
+              }
+              aria-label="Tutup"
+            >
+              <X size={15} />
+            </button>
+
+          </div>
+
+        </div>
+      )}
+
 
       {/* =================================================
           LEFT
@@ -65,7 +186,9 @@ function Navbar({ onMenuClick }) {
         {/* PAGE TITLE */}
 
         <div className="navbar-title">
-          <span>Financial Management</span>
+          <span>
+            Financial Management
+          </span>
         </div>
 
       </div>
@@ -104,6 +227,7 @@ function Navbar({ onMenuClick }) {
           <Bell size={18} />
 
           <span className="notification-dot"></span>
+
         </button>
 
 
@@ -115,7 +239,7 @@ function Navbar({ onMenuClick }) {
 
 
         {/* =================================================
-            PROFILE WRAPPER
+            PROFILE
         ================================================= */}
 
         <div className="navbar-profile-wrapper">
@@ -124,17 +248,21 @@ function Navbar({ onMenuClick }) {
 
           <button
             className={`navbar-user ${
-              profileOpen ? "profile-active" : ""
+              profileOpen
+                ? "profile-active"
+                : ""
             }`}
             onClick={() =>
-              setProfileOpen(!profileOpen)
+              setProfileOpen(
+                (prev) => !prev
+              )
             }
           >
 
             {/* AVATAR */}
 
             <div className="navbar-avatar">
-              H
+              {avatar}
             </div>
 
 
@@ -143,11 +271,11 @@ function Navbar({ onMenuClick }) {
             <div className="navbar-user-info">
 
               <strong>
-                Hafidh
+                {userName}
               </strong>
 
               <span>
-                Personal
+                {userRole}
               </span>
 
             </div>
@@ -158,7 +286,9 @@ function Navbar({ onMenuClick }) {
             <ChevronDown
               size={14}
               className={`profile-chevron ${
-                profileOpen ? "rotate" : ""
+                profileOpen
+                  ? "rotate"
+                  : ""
               }`}
             />
 
@@ -166,7 +296,7 @@ function Navbar({ onMenuClick }) {
 
 
           {/* =================================================
-              PROFILE DROPDOWN
+              DROPDOWN
           ================================================= */}
 
           {profileOpen && (
@@ -178,17 +308,19 @@ function Navbar({ onMenuClick }) {
               <div className="profile-dropdown-header">
 
                 <div className="profile-dropdown-avatar">
-                  H
+                  {avatar}
                 </div>
 
                 <div>
 
                   <strong>
-                    Hafidh
+                    {userName}
                   </strong>
 
                   <span>
-                    Personal Account
+                    {isAdmin
+                      ? "Administrator Account"
+                      : "Personal Account"}
                   </span>
 
                 </div>
@@ -205,7 +337,9 @@ function Navbar({ onMenuClick }) {
 
               <button
                 className="profile-dropdown-item"
-                onClick={handleEditProfile}
+                onClick={
+                  handleEditProfile
+                }
               >
 
                 <UserRound size={15} />
@@ -221,7 +355,9 @@ function Navbar({ onMenuClick }) {
 
               <button
                 className="profile-dropdown-item logout-item"
-                onClick={handleLogout}
+                onClick={
+                  handleLogoutClick
+                }
               >
 
                 <LogOut size={15} />
