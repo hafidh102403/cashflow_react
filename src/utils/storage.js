@@ -13,7 +13,7 @@ const DEFAULT_USERS = [
   {
     id: 1,
     name: "Admin",
-    email: "admin@cashflow.com",
+    email: "admin@gmail.com",
     password: "123456",
     role: "admin",
   },
@@ -87,28 +87,28 @@ export function getUsers() {
     const adminIndex = users.findIndex(
       (user) =>
         user.email?.toLowerCase() ===
-        "admin@cashflow.com"
+        "admin@gmail.com"
     );
 
     if (adminIndex === -1) {
       users.unshift({
         id: 1,
         name: "Admin",
-        email: "admin@cashflow.com",
+        email: "admin@gmail.com",
         password: "123456",
         role: "admin",
       });
     } else {
       /*
        * Paksa akun admin tetap menjadi:
-       * Admin / admin / admin@cashflow.com
+       * Admin / admin / admin@gmail.com
        */
 
       users[adminIndex] = {
         ...users[adminIndex],
         id: 1,
         name: "Admin",
-        email: "admin@cashflow.com",
+        email: "admin@gmail.com",
         password:
           users[adminIndex].password ||
           "123456",
