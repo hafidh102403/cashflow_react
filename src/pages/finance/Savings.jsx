@@ -17,30 +17,6 @@ import {
 ========================================================= */
 
 const initialSavingsData = [
-  {
-    id: 1,
-    name: "Dana Darurat",
-    target: 15000000,
-    current: 8500000,
-    date: "2026-09-14",
-    description: "Dana cadangan untuk kebutuhan darurat",
-  },
-  {
-    id: 2,
-    name: "Tabungan Liburan",
-    target: 10000000,
-    current: 6200000,
-    date: "2026-09-10",
-    description: "Persiapan liburan akhir tahun",
-  },
-  {
-    id: 3,
-    name: "Laptop Baru",
-    target: 15000000,
-    current: 9200000,
-    date: "2026-09-05",
-    description: "Menabung untuk membeli laptop baru",
-  },
 ];
 
 /* =========================================================
