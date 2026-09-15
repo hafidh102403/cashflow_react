@@ -6,10 +6,10 @@ import {
   Wallet,
   PiggyBank,
   HandCoins,
-  TrendingUp,
   TrendingDown,
   CalendarDays,
   ReceiptText,
+  Users,
 } from "lucide-react";
 
 import {
@@ -22,98 +22,12 @@ import {
   Tooltip,
 } from "recharts";
 
-
-/* =========================================================
-   STORAGE KEY
-========================================================= */
-
-const INCOME_STORAGE_KEY = "cashflow_income";
-const EXPENSE_STORAGE_KEY = "cashflow_expense";
-
-
-/* =========================================================
-   DATA DEFAULT
-   HANYA DIGUNAKAN JIKA LOCAL STORAGE KOSONG
-========================================================= */
-
-const defaultIncome = [
-  {
-    id: 1,
-    title: "Gaji Bulanan",
-    category: "Gaji",
-    date: "2026-09-01",
-    amount: 8500000,
-    description: "Gaji bulanan",
-  },
-  {
-    id: 2,
-    title: "Freelance Website",
-    category: "Freelance",
-    date: "2026-09-03",
-    amount: 2500000,
-    description: "Project website",
-  },
-  {
-    id: 3,
-    title: "Bonus",
-    category: "Bonus",
-    date: "2026-09-07",
-    amount: 1500000,
-    description: "Bonus pekerjaan",
-  },
-  {
-    id: 4,
-    title: "Penjualan",
-    category: "Penjualan",
-    date: "2026-09-11",
-    amount: 750000,
-    description: "Hasil penjualan",
-  },
-];
-
-
-const defaultExpense = [
-  {
-    id: 1,
-    title: "Belanja Bulanan",
-    category: "Kebutuhan",
-    date: "2026-09-04",
-    amount: 1250000,
-    description: "Belanja kebutuhan bulanan",
-  },
-  {
-    id: 2,
-    title: "Transportasi",
-    category: "Transportasi",
-    date: "2026-09-05",
-    amount: 450000,
-    description: "Transportasi harian",
-  },
-  {
-    id: 3,
-    title: "Makan & Minum",
-    category: "Makanan",
-    date: "2026-09-08",
-    amount: 320000,
-    description: "Makan dan minum",
-  },
-  {
-    id: 4,
-    title: "Hiburan",
-    category: "Hiburan",
-    date: "2026-09-10",
-    amount: 700000,
-    description: "Kebutuhan hiburan",
-  },
-  {
-    id: 5,
-    title: "Keperluan Lain",
-    category: "Lainnya",
-    date: "2026-09-12",
-    amount: 500000,
-    description: "Keperluan lainnya",
-  },
-];
+import {
+  getCurrentUser,
+  getUsers,
+  getUserData,
+  initializeUserData,
+} from "../../utils/storage";
 
 
 /* =========================================================
@@ -125,12 +39,12 @@ function formatRupiah(value) {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(Number(value) || 0);
 }
 
 
 /* =========================================================
-   FORMAT TANGGAL
+   FORMAT DATE
 ========================================================= */
 
 function formatDate(date) {
@@ -145,282 +59,1245 @@ function formatDate(date) {
 
 
 /* =========================================================
-   BACA LOCAL STORAGE
+   ADMIN DASHBOARD
 ========================================================= */
 
-function getStorageData(key, fallback) {
-  try {
-    const saved = localStorage.getItem(key);
-
-    if (!saved) {
-      return fallback;
-    }
-
-    const parsed = JSON.parse(saved);
-
-    return Array.isArray(parsed)
-      ? parsed
-      : fallback;
-
-  } catch {
-    return fallback;
-  }
-}
-
-
-/* =========================================================
-   DASHBOARD
-========================================================= */
-
-function Dashboard() {
+function AdminDashboard({ users }) {
 
   /* =======================================================
-     AMBIL DATA TERBARU DARI LOCAL STORAGE
+     ONLY NORMAL USERS
   ======================================================= */
 
-  const incomeTransactions = useMemo(() => {
-    return getStorageData(
-      INCOME_STORAGE_KEY,
-      defaultIncome
+  const normalUsers = useMemo(() => {
+    return users.filter(
+      (user) => user.role === "user"
     );
-  }, []);
-
-
-  const expenseTransactions = useMemo(() => {
-    return getStorageData(
-      EXPENSE_STORAGE_KEY,
-      defaultExpense
-    );
-  }, []);
+  }, [users]);
 
 
   /* =======================================================
-     TOTAL PEMASUKAN
+     FINANCIAL DATA EACH USER
   ======================================================= */
 
-  const totalIncome = useMemo(() => {
-    return incomeTransactions.reduce(
-      (total, item) =>
-        total + Number(item.amount || 0),
-      0
-    );
-  }, [incomeTransactions]);
+  const usersFinancialData = useMemo(() => {
+
+    return normalUsers.map((user) => {
+
+      const incomeTransactions =
+        getUserData(
+          "income",
+          user.id
+        );
+
+      const expenseTransactions =
+        getUserData(
+          "expense",
+          user.id
+        );
+
+      const savingsTransactions =
+        getUserData(
+          "savings",
+          user.id
+        );
+
+      const debtTransactions =
+        getUserData(
+          "debt",
+          user.id
+        );
 
 
-  /* =======================================================
-     TOTAL PENGELUARAN
-  ======================================================= */
+      /* ===============================================
+         INCOME
+      =============================================== */
 
-  const totalExpense = useMemo(() => {
-    return expenseTransactions.reduce(
-      (total, item) =>
-        total + Number(item.amount || 0),
-      0
-    );
-  }, [expenseTransactions]);
-
-
-  /* =======================================================
-     SALDO
-  ======================================================= */
-
-  const balance = totalIncome - totalExpense;
+      const totalIncome =
+        incomeTransactions.reduce(
+          (total, item) =>
+            total +
+            Number(item.amount || 0),
+          0
+        );
 
 
-  /* =======================================================
-     TOTAL TABUNGAN
-  ======================================================= */
+      /* ===============================================
+         EXPENSE
+      =============================================== */
 
-  const totalSavings = 0;
-
-
-  /* =======================================================
-     TOTAL UTANG
-  ======================================================= */
-
-  const totalDebt = 0;
-
-
-  /* =======================================================
-     RASIO PENGELUARAN
-  ======================================================= */
-
-  const expenseRatio =
-    totalIncome > 0
-      ? Math.round(
-          (totalExpense / totalIncome) * 100
-        )
-      : 0;
+      const totalExpense =
+        expenseTransactions.reduce(
+          (total, item) =>
+            total +
+            Number(item.amount || 0),
+          0
+        );
 
 
-  /* =======================================================
-     SEMUA TRANSAKSI
-  ======================================================= */
+      /* ===============================================
+         SAVINGS
+      =============================================== */
 
-  const allTransactions = useMemo(() => {
-
-    const incomes = incomeTransactions.map((item) => ({
-      ...item,
-      type: "income",
-    }));
-
-    const expenses = expenseTransactions.map((item) => ({
-      ...item,
-      type: "expense",
-    }));
-
-    return [
-      ...incomes,
-      ...expenses,
-    ].sort(
-      (a, b) =>
-        new Date(`${b.date}T00:00:00`) -
-        new Date(`${a.date}T00:00:00`)
-    );
-
-  }, [
-    incomeTransactions,
-    expenseTransactions,
-  ]);
+      const totalSavings =
+        savingsTransactions.reduce(
+          (total, item) =>
+            total +
+            Number(
+              item.currentAmount ??
+              item.amount ??
+              item.nominal ??
+              0
+            ),
+          0
+        );
 
 
-  /* =======================================================
-     TRANSAKSI TERBARU
-  ======================================================= */
+      /* ===============================================
+         DEBT
+      =============================================== */
 
-  const latestTransactions =
-    allTransactions.slice(0, 6);
-
-
-  /* =======================================================
-     CHART DATA
-  ======================================================= */
-
-  const chartData = useMemo(() => {
-
-    const days = [
-      "01",
-      "04",
-      "07",
-      "10",
-      "13",
-      "16",
-      "19",
-      "22",
-      "25",
-      "28",
-      "31",
-    ];
-
-    return days.map((day) => {
-
-      const incomeForDay =
-        incomeTransactions
+      const totalDebt =
+        debtTransactions
           .filter((item) => {
-            const date = new Date(
-              `${item.date}T00:00:00`
-            );
+
+            const type =
+              String(
+                item.type || ""
+              ).toLowerCase();
 
             return (
-              String(
-                date.getDate()
-              ).padStart(2, "0") === day
+              type === "utang" ||
+              type === "debt"
             );
+
           })
           .reduce(
             (total, item) =>
-              total + Number(item.amount || 0),
+              total +
+              Number(
+                item.amount ??
+                item.total ??
+                0
+              ),
             0
           );
 
 
-      const expenseForDay =
-        expenseTransactions
-          .filter((item) => {
-            const date = new Date(
-              `${item.date}T00:00:00`
-            );
+      /* ===============================================
+         BALANCE
+      =============================================== */
 
-            return (
-              String(
-                date.getDate()
-              ).padStart(2, "0") === day
-            );
-          })
-          .reduce(
-            (total, item) =>
-              total + Number(item.amount || 0),
-            0
-          );
+      const balance =
+        totalIncome -
+        totalExpense;
 
 
       return {
-        day,
-        income: incomeForDay,
-        expense: expenseForDay,
-        balance:
-          incomeForDay - expenseForDay,
+        ...user,
+
+        incomeTransactions,
+        expenseTransactions,
+        savingsTransactions,
+        debtTransactions,
+
+        totalIncome,
+        totalExpense,
+        totalSavings,
+        totalDebt,
+        balance,
       };
 
     });
 
-  }, [
-    incomeTransactions,
-    expenseTransactions,
-  ]);
+  }, [normalUsers]);
 
 
   /* =======================================================
-     EXPENSE CATEGORY
+     TOTAL INCOME ALL USERS
   ======================================================= */
 
-  const expenseCategories = useMemo(() => {
+  const totalIncomeAllUsers =
+    useMemo(() => {
 
-    const categoryMap = {};
-
-    expenseTransactions.forEach((item) => {
-
-      const category =
-        item.category || "Lainnya";
-
-      if (!categoryMap[category]) {
-        categoryMap[category] = 0;
-      }
-
-      categoryMap[category] +=
-        Number(item.amount || 0);
-
-    });
-
-
-    return Object.entries(categoryMap)
-      .map(([category, amount]) => ({
-        category,
-        amount,
-        percentage:
-          totalExpense > 0
-            ? Math.round(
-                (amount / totalExpense) * 100
-              )
-            : 0,
-      }))
-      .sort(
-        (a, b) => b.amount - a.amount
+      return usersFinancialData.reduce(
+        (total, user) =>
+          total +
+          user.totalIncome,
+        0
       );
 
-  }, [
-    expenseTransactions,
-    totalExpense,
-  ]);
+    }, [usersFinancialData]);
 
+
+  /* =======================================================
+     TOTAL EXPENSE ALL USERS
+  ======================================================= */
+
+  const totalExpenseAllUsers =
+    useMemo(() => {
+
+      return usersFinancialData.reduce(
+        (total, user) =>
+          total +
+          user.totalExpense,
+        0
+      );
+
+    }, [usersFinancialData]);
+
+
+  /* =======================================================
+     TOTAL BALANCE ALL USERS
+  ======================================================= */
+
+  const totalBalanceAllUsers =
+    totalIncomeAllUsers -
+    totalExpenseAllUsers;
+
+
+  /* =======================================================
+     TOTAL TRANSACTIONS
+  ======================================================= */
+
+  const totalTransactions =
+    useMemo(() => {
+
+      return usersFinancialData.reduce(
+        (total, user) =>
+          total +
+          user.incomeTransactions.length +
+          user.expenseTransactions.length,
+        0
+      );
+
+    }, [usersFinancialData]);
+
+
+  /* =======================================================
+     AVERAGE BALANCE
+  ======================================================= */
+
+  const averageBalance =
+    normalUsers.length > 0
+      ? totalBalanceAllUsers /
+        normalUsers.length
+      : 0;
+
+
+  /* =======================================================
+     RENDER ADMIN
+  ======================================================= */
 
   return (
 
     <div className="dashboard-page">
 
-      {/* ===================================================
+      {/* =================================================
           HEADER
-      =================================================== */}
+      ================================================= */}
+
+      <div className="dashboard-header">
+
+        <div>
+
+          <h1>
+            Dashboard Admin
+          </h1>
+
+          <p>
+            Ringkasan kondisi keuangan seluruh user.
+          </p>
+
+        </div>
+
+        <div className="dashboard-date">
+
+          <CalendarDays size={14} />
+
+          <span>
+            {new Intl.DateTimeFormat(
+              "id-ID",
+              {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              }
+            ).format(new Date())}
+          </span>
+
+        </div>
+
+      </div>
+
+
+      {/* =================================================
+          ADMIN SUMMARY
+      ================================================= */}
+
+      <div className="dashboard-summary-grid">
+
+        {/* TOTAL USER */}
+
+        <div className="dashboard-summary-card">
+
+          <div className="dashboard-summary-icon balance-icon">
+
+            <Users size={18} />
+
+          </div>
+
+          <div>
+
+            <span>
+              Total User
+            </span>
+
+            <strong>
+              {normalUsers.length}
+            </strong>
+
+            <small>
+              User terdaftar
+            </small>
+
+          </div>
+
+        </div>
+
+
+        {/* TOTAL PEMASUKAN */}
+
+        <div className="dashboard-summary-card">
+
+          <div className="dashboard-summary-icon income-icon">
+
+            <ArrowDownLeft size={18} />
+
+          </div>
+
+          <div>
+
+            <span>
+              Total Pemasukan
+            </span>
+
+            <strong>
+              {formatRupiah(
+                totalIncomeAllUsers
+              )}
+            </strong>
+
+            <small>
+              Semua user
+            </small>
+
+          </div>
+
+        </div>
+
+
+        {/* TOTAL PENGELUARAN */}
+
+        <div className="dashboard-summary-card">
+
+          <div className="dashboard-summary-icon expense-icon">
+
+            <ArrowUpRight size={18} />
+
+          </div>
+
+          <div>
+
+            <span>
+              Total Pengeluaran
+            </span>
+
+            <strong>
+              {formatRupiah(
+                totalExpenseAllUsers
+              )}
+            </strong>
+
+            <small>
+              Semua user
+            </small>
+
+          </div>
+
+        </div>
+
+
+        {/* TOTAL SALDO */}
+
+        <div className="dashboard-summary-card">
+
+          <div className="dashboard-summary-icon savings-icon">
+
+            <Wallet size={18} />
+
+          </div>
+
+          <div>
+
+            <span>
+              Total Saldo
+            </span>
+
+            <strong>
+              {formatRupiah(
+                totalBalanceAllUsers
+              )}
+            </strong>
+
+            <small>
+              Saldo seluruh user
+            </small>
+
+          </div>
+
+        </div>
+
+
+        {/* TOTAL TRANSAKSI */}
+
+        <div className="dashboard-summary-card">
+
+          <div className="dashboard-summary-icon debt-icon">
+
+            <ReceiptText size={18} />
+
+          </div>
+
+          <div>
+
+            <span>
+              Total Transaksi
+            </span>
+
+            <strong>
+              {totalTransactions}
+            </strong>
+
+            <small>
+              Semua transaksi
+            </small>
+
+          </div>
+
+        </div>
+
+
+        {/* RATA RATA SALDO */}
+
+        <div className="dashboard-summary-card">
+
+          <div className="dashboard-summary-icon ratio-icon">
+
+            <TrendingDown size={18} />
+
+          </div>
+
+          <div>
+
+            <span>
+              Rata-rata Saldo
+            </span>
+
+            <strong>
+              {formatRupiah(
+                averageBalance
+              )}
+            </strong>
+
+            <small>
+              Per user
+            </small>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      {/* =================================================
+          RINGKASAN USER
+      ================================================= */}
+
+      <div className="dashboard-panel">
+
+        <div className="dashboard-panel-header">
+
+          <div>
+
+            <h2>
+              Ringkasan Keuangan User
+            </h2>
+
+            <p>
+              Pemasukan, pengeluaran, dan saldo setiap user.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          className="dashboard-user-summary-list"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+          }}
+        >
+
+          {usersFinancialData.length > 0 ? (
+
+            usersFinancialData.map(
+              (user) => {
+
+                const expenseRatio =
+                  user.totalIncome > 0
+                    ? Math.round(
+                        (user.totalExpense /
+                          user.totalIncome) *
+                          100
+                      )
+                    : 0;
+
+
+                return (
+
+                  <div
+                    key={user.id}
+                    className="dashboard-user-summary"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "minmax(110px, 1.2fr) repeat(3, minmax(100px, 1fr))",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "7px 10px",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "6px",
+                      background: "#ffffff",
+                    }}
+                  >
+
+                    {/* =================================
+                        USER
+                    ================================= */}
+
+                    <div>
+
+                      <strong
+                        style={{
+                          display: "block",
+                          fontSize: "10px",
+                          fontWeight: "600",
+                          lineHeight: "1.2",
+                        }}
+                      >
+                        {user.name}
+                      </strong>
+
+                      <span
+                        style={{
+                          display: "block",
+                          marginTop: "1px",
+                          fontSize: "8px",
+                          lineHeight: "1.2",
+                          color: "#64748b",
+                        }}
+                      >
+                        {user.email}
+                      </span>
+
+                      <small
+                        style={{
+                          display: "block",
+                          marginTop: "2px",
+                          fontSize: "7px",
+                          lineHeight: "1.2",
+                          color: "#94a3b8",
+                        }}
+                      >
+                        Rasio pengeluaran{" "}
+                        {expenseRatio}%
+                      </small>
+
+                    </div>
+
+
+                    {/* =================================
+                        PEMASUKAN
+                    ================================= */}
+
+                    <div>
+
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: "7px",
+                          lineHeight: "1.2",
+                          color: "#64748b",
+                        }}
+                      >
+                        Pemasukan
+                      </span>
+
+                      <strong
+                        style={{
+                          display: "block",
+                          marginTop: "2px",
+                          fontSize: "9px",
+                          fontWeight: "600",
+                          lineHeight: "1.2",
+                          color: "#059669",
+                        }}
+                      >
+                        {formatRupiah(
+                          user.totalIncome
+                        )}
+                      </strong>
+
+                    </div>
+
+
+                    {/* =================================
+                        PENGELUARAN
+                    ================================= */}
+
+                    <div>
+
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: "7px",
+                          lineHeight: "1.2",
+                          color: "#64748b",
+                        }}
+                      >
+                        Pengeluaran
+                      </span>
+
+                      <strong
+                        style={{
+                          display: "block",
+                          marginTop: "2px",
+                          fontSize: "9px",
+                          fontWeight: "600",
+                          lineHeight: "1.2",
+                          color: "#dc2626",
+                        }}
+                      >
+                        {formatRupiah(
+                          user.totalExpense
+                        )}
+                      </strong>
+
+                    </div>
+
+
+                    {/* =================================
+                        SALDO
+                    ================================= */}
+
+                    <div>
+
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: "7px",
+                          lineHeight: "1.2",
+                          color: "#64748b",
+                        }}
+                      >
+                        Saldo
+                      </span>
+
+                      <strong
+                        style={{
+                          display: "block",
+                          marginTop: "2px",
+                          fontSize: "9px",
+                          fontWeight: "600",
+                          lineHeight: "1.2",
+                          color:
+                            user.balance >= 0
+                              ? "#2563eb"
+                              : "#dc2626",
+                        }}
+                      >
+                        {formatRupiah(
+                          user.balance
+                        )}
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+                );
+
+              }
+            )
+
+          ) : (
+
+            <div className="dashboard-empty">
+
+              <Users size={24} />
+
+              <strong>
+                Belum ada user
+              </strong>
+
+              <span>
+                Tambahkan user terlebih dahulu.
+              </span>
+
+            </div>
+
+          )}
+
+        </div>
+
+      </div>
+
+
+      {/* =================================================
+          TABUNGAN & UTANG
+      ================================================= */}
+
+      <div className="dashboard-lower-grid">
+
+        {/* TABUNGAN */}
+
+        <div className="dashboard-panel">
+
+          <div className="dashboard-panel-header">
+
+            <div>
+
+              <h2>
+                Total Tabungan User
+              </h2>
+
+              <p>
+                Total dana tabungan seluruh user.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="dashboard-financial-summary">
+
+            {usersFinancialData.map(
+              (user) => (
+
+                <div
+                  className="dashboard-financial-row"
+                  key={user.id}
+                >
+
+                  <div>
+
+                    <span className="financial-row-icon income">
+
+                      <PiggyBank size={13} />
+
+                    </span>
+
+                    <span>
+                      {user.name}
+                    </span>
+
+                  </div>
+
+                  <strong className="positive">
+
+                    {formatRupiah(
+                      user.totalSavings
+                    )}
+
+                  </strong>
+
+                </div>
+
+              )
+            )}
+
+          </div>
+
+        </div>
+
+
+        {/* UTANG */}
+
+        <div className="dashboard-panel">
+
+          <div className="dashboard-panel-header">
+
+            <div>
+
+              <h2>
+                Total Utang User
+              </h2>
+
+              <p>
+                Total utang yang tercatat.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div className="dashboard-financial-summary">
+
+            {usersFinancialData.map(
+              (user) => (
+
+                <div
+                  className="dashboard-financial-row"
+                  key={user.id}
+                >
+
+                  <div>
+
+                    <span className="financial-row-icon expense">
+
+                      <HandCoins size={13} />
+
+                    </span>
+
+                    <span>
+                      {user.name}
+                    </span>
+
+                  </div>
+
+                  <strong className="negative">
+
+                    {formatRupiah(
+                      user.totalDebt
+                    )}
+
+                  </strong>
+
+                </div>
+
+              )
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  );
+}
+
+
+/* =========================================================
+   USER DASHBOARD
+========================================================= */
+
+function UserDashboard({ currentUser }) {
+
+  /* =======================================================
+     INITIALIZE
+  ======================================================= */
+
+  initializeUserData(
+    currentUser.id
+  );
+
+
+  /* =======================================================
+     DATA
+  ======================================================= */
+
+  const incomeTransactions =
+    useMemo(() => {
+
+      return getUserData(
+        "income",
+        currentUser.id
+      );
+
+    }, [currentUser.id]);
+
+
+  const expenseTransactions =
+    useMemo(() => {
+
+      return getUserData(
+        "expense",
+        currentUser.id
+      );
+
+    }, [currentUser.id]);
+
+
+  const savingsTransactions =
+    useMemo(() => {
+
+      return getUserData(
+        "savings",
+        currentUser.id
+      );
+
+    }, [currentUser.id]);
+
+
+  const debtTransactions =
+    useMemo(() => {
+
+      return getUserData(
+        "debt",
+        currentUser.id
+      );
+
+    }, [currentUser.id]);
+
+
+  /* =======================================================
+     TOTAL INCOME
+  ======================================================= */
+
+  const totalIncome =
+    useMemo(() => {
+
+      return incomeTransactions.reduce(
+        (total, item) =>
+          total +
+          Number(item.amount || 0),
+        0
+      );
+
+    }, [incomeTransactions]);
+
+
+  /* =======================================================
+     TOTAL EXPENSE
+  ======================================================= */
+
+  const totalExpense =
+    useMemo(() => {
+
+      return expenseTransactions.reduce(
+        (total, item) =>
+          total +
+          Number(item.amount || 0),
+        0
+      );
+
+    }, [expenseTransactions]);
+
+
+  /* =======================================================
+     BALANCE
+  ======================================================= */
+
+  const balance =
+    totalIncome -
+    totalExpense;
+
+
+  /* =======================================================
+     SAVINGS
+  ======================================================= */
+
+  const totalSavings =
+    useMemo(() => {
+
+      return savingsTransactions.reduce(
+        (total, item) =>
+          total +
+          Number(
+            item.currentAmount ??
+            item.amount ??
+            item.nominal ??
+            0
+          ),
+        0
+      );
+
+    }, [savingsTransactions]);
+
+
+  /* =======================================================
+     DEBT
+  ======================================================= */
+
+  const totalDebt =
+    useMemo(() => {
+
+      return debtTransactions
+        .filter((item) => {
+
+          const type =
+            String(
+              item.type || ""
+            ).toLowerCase();
+
+          return (
+            type === "utang" ||
+            type === "debt"
+          );
+
+        })
+        .reduce(
+          (total, item) =>
+            total +
+            Number(
+              item.amount ??
+              item.total ??
+              0
+            ),
+          0
+        );
+
+    }, [debtTransactions]);
+
+
+  /* =======================================================
+     EXPENSE RATIO
+  ======================================================= */
+
+  const expenseRatio =
+    totalIncome > 0
+      ? Math.round(
+          (totalExpense /
+            totalIncome) *
+            100
+        )
+      : 0;
+
+
+  /* =======================================================
+     ALL TRANSACTIONS
+  ======================================================= */
+
+  const allTransactions =
+    useMemo(() => {
+
+      const incomes =
+        incomeTransactions.map(
+          (item) => ({
+            ...item,
+            type: "income",
+          })
+        );
+
+      const expenses =
+        expenseTransactions.map(
+          (item) => ({
+            ...item,
+            type: "expense",
+          })
+        );
+
+      return [
+        ...incomes,
+        ...expenses,
+      ].sort(
+        (a, b) =>
+          new Date(
+            `${b.date}T00:00:00`
+          ) -
+          new Date(
+            `${a.date}T00:00:00`
+          )
+      );
+
+    }, [
+      incomeTransactions,
+      expenseTransactions,
+    ]);
+
+
+  /* =======================================================
+     LATEST TRANSACTIONS
+  ======================================================= */
+
+  const latestTransactions =
+    allTransactions.slice(
+      0,
+      6
+    );
+
+
+  /* =======================================================
+     CHART
+  ======================================================= */
+
+  const chartData =
+    useMemo(() => {
+
+      const days = [
+        "01",
+        "04",
+        "07",
+        "10",
+        "13",
+        "16",
+        "19",
+        "22",
+        "25",
+        "28",
+        "31",
+      ];
+
+      return days.map((day) => {
+
+        const incomeForDay =
+          incomeTransactions
+            .filter((item) => {
+
+              const date =
+                new Date(
+                  `${item.date}T00:00:00`
+                );
+
+              return (
+                String(
+                  date.getDate()
+                ).padStart(2, "0") ===
+                day
+              );
+
+            })
+            .reduce(
+              (total, item) =>
+                total +
+                Number(
+                  item.amount || 0
+                ),
+              0
+            );
+
+
+        const expenseForDay =
+          expenseTransactions
+            .filter((item) => {
+
+              const date =
+                new Date(
+                  `${item.date}T00:00:00`
+                );
+
+              return (
+                String(
+                  date.getDate()
+                ).padStart(2, "0") ===
+                day
+              );
+
+            })
+            .reduce(
+              (total, item) =>
+                total +
+                Number(
+                  item.amount || 0
+                ),
+              0
+            );
+
+
+        return {
+          day,
+          income: incomeForDay,
+          expense: expenseForDay,
+          balance:
+            incomeForDay -
+            expenseForDay,
+        };
+
+      });
+
+    }, [
+      incomeTransactions,
+      expenseTransactions,
+    ]);
+
+
+  /* =======================================================
+     EXPENSE CATEGORIES
+  ======================================================= */
+
+  const expenseCategories =
+    useMemo(() => {
+
+      const categoryMap = {};
+
+      expenseTransactions.forEach(
+        (item) => {
+
+          const category =
+            item.category ||
+            "Lainnya";
+
+          if (
+            !categoryMap[category]
+          ) {
+            categoryMap[category] = 0;
+          }
+
+          categoryMap[category] +=
+            Number(
+              item.amount || 0
+            );
+
+        }
+      );
+
+      return Object.entries(
+        categoryMap
+      )
+        .map(
+          ([category, amount]) => ({
+            category,
+            amount,
+            percentage:
+              totalExpense > 0
+                ? Math.round(
+                    (amount /
+                      totalExpense) *
+                      100
+                  )
+                : 0,
+          })
+        )
+        .sort(
+          (a, b) =>
+            b.amount -
+            a.amount
+        );
+
+    }, [
+      expenseTransactions,
+      totalExpense,
+    ]);
+
+
+  /* =======================================================
+     RENDER USER
+  ======================================================= */
+
+  return (
+
+    <div className="dashboard-page">
+
+      {/* =================================================
+          HEADER
+      ================================================= */}
 
       <div className="dashboard-header">
 
@@ -436,13 +1313,19 @@ function Dashboard() {
 
         </div>
 
-
         <div className="dashboard-date">
 
           <CalendarDays size={14} />
 
           <span>
-            14 September 2026
+            {new Intl.DateTimeFormat(
+              "id-ID",
+              {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              }
+            ).format(new Date())}
           </span>
 
         </div>
@@ -450,19 +1333,20 @@ function Dashboard() {
       </div>
 
 
-      {/* ===================================================
-          SUMMARY CARDS
-      =================================================== */}
+      {/* =================================================
+          SUMMARY
+      ================================================= */}
 
       <div className="dashboard-summary-grid">
-
 
         {/* SALDO */}
 
         <div className="dashboard-summary-card">
 
           <div className="dashboard-summary-icon balance-icon">
+
             <Wallet size={18} />
+
           </div>
 
           <div>
@@ -472,7 +1356,9 @@ function Dashboard() {
             </span>
 
             <strong>
-              {formatRupiah(balance)}
+              {formatRupiah(
+                balance
+              )}
             </strong>
 
             <small>
@@ -489,7 +1375,9 @@ function Dashboard() {
         <div className="dashboard-summary-card">
 
           <div className="dashboard-summary-icon income-icon">
+
             <ArrowDownLeft size={18} />
+
           </div>
 
           <div>
@@ -499,11 +1387,14 @@ function Dashboard() {
             </span>
 
             <strong>
-              {formatRupiah(totalIncome)}
+              {formatRupiah(
+                totalIncome
+              )}
             </strong>
 
             <small>
-              {incomeTransactions.length} transaksi
+              {incomeTransactions.length}{" "}
+              transaksi
             </small>
 
           </div>
@@ -516,7 +1407,9 @@ function Dashboard() {
         <div className="dashboard-summary-card">
 
           <div className="dashboard-summary-icon expense-icon">
+
             <ArrowUpRight size={18} />
+
           </div>
 
           <div>
@@ -526,11 +1419,14 @@ function Dashboard() {
             </span>
 
             <strong>
-              {formatRupiah(totalExpense)}
+              {formatRupiah(
+                totalExpense
+              )}
             </strong>
 
             <small>
-              {expenseTransactions.length} transaksi
+              {expenseTransactions.length}{" "}
+              transaksi
             </small>
 
           </div>
@@ -543,7 +1439,9 @@ function Dashboard() {
         <div className="dashboard-summary-card">
 
           <div className="dashboard-summary-icon savings-icon">
+
             <PiggyBank size={18} />
+
           </div>
 
           <div>
@@ -553,7 +1451,9 @@ function Dashboard() {
             </span>
 
             <strong>
-              {formatRupiah(totalSavings)}
+              {formatRupiah(
+                totalSavings
+              )}
             </strong>
 
             <small>
@@ -570,7 +1470,9 @@ function Dashboard() {
         <div className="dashboard-summary-card">
 
           <div className="dashboard-summary-icon debt-icon">
+
             <HandCoins size={18} />
+
           </div>
 
           <div>
@@ -580,7 +1482,9 @@ function Dashboard() {
             </span>
 
             <strong>
-              {formatRupiah(totalDebt)}
+              {formatRupiah(
+                totalDebt
+              )}
             </strong>
 
             <small>
@@ -597,7 +1501,9 @@ function Dashboard() {
         <div className="dashboard-summary-card">
 
           <div className="dashboard-summary-icon ratio-icon">
+
             <TrendingDown size={18} />
+
           </div>
 
           <div>
@@ -621,16 +1527,13 @@ function Dashboard() {
       </div>
 
 
-      {/* ===================================================
+      {/* =================================================
           MAIN GRID
-      =================================================== */}
+      ================================================= */}
 
       <div className="dashboard-main-grid">
 
-
-        {/* =================================================
-            CASH FLOW
-        ================================================= */}
+        {/* CASH FLOW */}
 
         <div className="dashboard-panel">
 
@@ -689,13 +1592,17 @@ function Dashboard() {
                   }}
                   tickFormatter={(value) => {
 
-                    if (value >= 1000000) {
+                    if (
+                      value >= 1000000
+                    ) {
                       return `${(
-                        value / 1000000
+                        value /
+                        1000000
                       ).toFixed(0)}M`;
                     }
 
                     return value;
+
                   }}
                 />
 
@@ -704,7 +1611,6 @@ function Dashboard() {
                     formatRupiah(value)
                   }
                 />
-
 
                 <Area
                   type="monotone"
@@ -715,7 +1621,6 @@ function Dashboard() {
                   fillOpacity={0.08}
                 />
 
-
                 <Area
                   type="monotone"
                   dataKey="expense"
@@ -724,7 +1629,6 @@ function Dashboard() {
                   fill="#ef4444"
                   fillOpacity={0.06}
                 />
-
 
                 <Area
                   type="monotone"
@@ -741,8 +1645,6 @@ function Dashboard() {
 
           </div>
 
-
-          {/* LEGEND */}
 
           <div className="dashboard-chart-legend">
 
@@ -766,9 +1668,7 @@ function Dashboard() {
         </div>
 
 
-        {/* =================================================
-            EXPENSE CATEGORY
-        ================================================= */}
+        {/* CATEGORY */}
 
         <div className="dashboard-panel">
 
@@ -798,7 +1698,9 @@ function Dashboard() {
               </span>
 
               <strong>
-                {formatRupiah(totalExpense)}
+                {formatRupiah(
+                  totalExpense
+                )}
               </strong>
 
             </div>
@@ -851,7 +1753,9 @@ function Dashboard() {
               ) : (
 
                 <div className="dashboard-empty">
+
                   Belum ada pengeluaran.
+
                 </div>
 
               )}
@@ -865,16 +1769,13 @@ function Dashboard() {
       </div>
 
 
-      {/* ===================================================
+      {/* =================================================
           LOWER GRID
-      =================================================== */}
+      ================================================= */}
 
       <div className="dashboard-lower-grid">
 
-
-        {/* =================================================
-            LATEST TRANSACTIONS
-        ================================================= */}
+        {/* TRANSAKSI */}
 
         <div className="dashboard-panel">
 
@@ -899,79 +1800,83 @@ function Dashboard() {
 
             {latestTransactions.length > 0 ? (
 
-              latestTransactions.map((item) => {
+              latestTransactions.map(
+                (item) => {
 
-                const isIncome =
-                  item.type === "income";
+                  const isIncome =
+                    item.type ===
+                    "income";
 
-                return (
-
-                  <div
-                    className="dashboard-transaction"
-                    key={`${item.type}-${item.id}`}
-                  >
-
-                    {/* ICON */}
+                  return (
 
                     <div
-                      className={`dashboard-transaction-icon ${
-                        isIncome
-                          ? "dashboard-income"
-                          : "dashboard-expense"
-                      }`}
+                      className="dashboard-transaction"
+                      key={`${item.type}-${item.id}`}
                     >
 
-                      {isIncome ? (
-                        <ArrowDownLeft size={14} />
-                      ) : (
-                        <ArrowUpRight size={14} />
-                      )}
+                      <div
+                        className={`dashboard-transaction-icon ${
+                          isIncome
+                            ? "dashboard-income"
+                            : "dashboard-expense"
+                        }`}
+                      >
 
-                    </div>
+                        {isIncome ? (
+                          <ArrowDownLeft size={14} />
+                        ) : (
+                          <ArrowUpRight size={14} />
+                        )}
+
+                      </div>
 
 
-                    {/* CONTENT */}
+                      <div className="dashboard-transaction-info">
 
-                    <div className="dashboard-transaction-info">
+                        <strong>
+                          {item.title}
+                        </strong>
 
-                      <strong>
-                        {item.title}
+                        <span>
+                          {formatDate(
+                            item.date
+                          )}
+                          {" · "}
+                          {item.category}
+                        </span>
+
+                      </div>
+
+
+                      <strong
+                        className={
+                          isIncome
+                            ? "dashboard-income-value"
+                            : "dashboard-expense-value"
+                        }
+                      >
+
+                        {isIncome
+                          ? "+"
+                          : "-"}
+
+                        {" "}
+
+                        {formatRupiah(
+                          Number(
+                            item.amount ||
+                              0
+                          )
+                        )}
+
                       </strong>
 
-                      <span>
-                        {formatDate(item.date)}
-                        {" · "}
-                        {item.category}
-                      </span>
-
                     </div>
 
+                  );
 
-                    {/* AMOUNT */}
-
-                    <strong
-                      className={
-                        isIncome
-                          ? "dashboard-income-value"
-                          : "dashboard-expense-value"
-                      }
-                    >
-
-                      {isIncome ? "+" : "-"}
-
-                      {" "}
-
-                      {formatRupiah(
-                        Number(item.amount || 0)
-                      )}
-
-                    </strong>
-
-                  </div>
-
-                );
-
-              })
+                }
+              )
 
             ) : (
 
@@ -996,9 +1901,7 @@ function Dashboard() {
         </div>
 
 
-        {/* =================================================
-            FINANCIAL SUMMARY
-        ================================================= */}
+        {/* RINGKASAN KEUANGAN */}
 
         <div className="dashboard-panel">
 
@@ -1021,15 +1924,14 @@ function Dashboard() {
 
           <div className="dashboard-financial-summary">
 
-
-            {/* PEMASUKAN */}
-
             <div className="dashboard-financial-row">
 
               <div>
 
                 <span className="financial-row-icon income">
+
                   <ArrowDownLeft size={13} />
+
                 </span>
 
                 <span>
@@ -1039,20 +1941,24 @@ function Dashboard() {
               </div>
 
               <strong className="positive">
-                {formatRupiah(totalIncome)}
+
+                {formatRupiah(
+                  totalIncome
+                )}
+
               </strong>
 
             </div>
 
-
-            {/* PENGELUARAN */}
 
             <div className="dashboard-financial-row">
 
               <div>
 
                 <span className="financial-row-icon expense">
+
                   <ArrowUpRight size={13} />
+
                 </span>
 
                 <span>
@@ -1062,20 +1968,24 @@ function Dashboard() {
               </div>
 
               <strong className="negative">
-                {formatRupiah(totalExpense)}
+
+                {formatRupiah(
+                  totalExpense
+                )}
+
               </strong>
 
             </div>
 
-
-            {/* SALDO */}
 
             <div className="dashboard-financial-row total-row">
 
               <div>
 
                 <span className="financial-row-icon balance">
+
                   <Wallet size={13} />
+
                 </span>
 
                 <span>
@@ -1091,13 +2001,15 @@ function Dashboard() {
                     : "negative"
                 }
               >
-                {formatRupiah(balance)}
+
+                {formatRupiah(
+                  balance
+                )}
+
               </strong>
 
             </div>
 
-
-            {/* RASIO */}
 
             <div className="dashboard-ratio">
 
@@ -1113,6 +2025,7 @@ function Dashboard() {
 
               </div>
 
+
               <div className="dashboard-ratio-track">
 
                 <div
@@ -1127,6 +2040,7 @@ function Dashboard() {
 
               </div>
 
+
               <small>
                 Pengeluaran dibandingkan total pemasukan
               </small>
@@ -1140,7 +2054,81 @@ function Dashboard() {
       </div>
 
     </div>
+
   );
 }
+
+
+/* =========================================================
+   MAIN DASHBOARD
+========================================================= */
+
+function Dashboard() {
+
+  const currentUser =
+    getCurrentUser();
+
+
+  /* =======================================================
+     BELUM LOGIN
+  ======================================================= */
+
+  if (!currentUser) {
+    return null;
+  }
+
+
+  /* =======================================================
+     ADMIN
+     
+     HANYA ADMIN YANG MELIHAT DATA
+     SELURUH USER
+  ======================================================= */
+
+  if (
+    currentUser.role ===
+    "admin"
+  ) {
+
+    const users =
+      getUsers();
+
+    users
+      .filter(
+        (user) =>
+          user.role ===
+          "user"
+      )
+      .forEach(
+        (user) =>
+          initializeUserData(
+            user.id
+          )
+      );
+
+    return (
+      <AdminDashboard
+        users={users}
+      />
+    );
+
+  }
+
+
+  /* =======================================================
+     USER
+     
+     HANYA DATA USER YANG LOGIN
+  ======================================================= */
+
+  return (
+    <UserDashboard
+      currentUser={
+        currentUser
+      }
+    />
+  );
+}
+
 
 export default Dashboard;

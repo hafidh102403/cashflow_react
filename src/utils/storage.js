@@ -1,13 +1,13 @@
-/* =========================================================
-   STORAGE CONFIGURATION
-========================================================= */
+// =========================================================
+// USER STORAGE
+// =========================================================
 
 const USER_STORAGE_KEY = "cashflow_users";
 const CURRENT_USER_STORAGE_KEY = "cashflow_current_user";
 
-/* =========================================================
-   DEFAULT USERS
-========================================================= */
+// =========================================================
+// DEFAULT USERS
+// =========================================================
 
 const DEFAULT_USERS = [
   {
@@ -40,19 +40,13 @@ const DEFAULT_USERS = [
   },
 ];
 
-/* =========================================================
-   GET USERS
-========================================================= */
+// =========================================================
+// GET USERS
+// =========================================================
 
 export function getUsers() {
   try {
-    const saved = localStorage.getItem(
-      USER_STORAGE_KEY
-    );
-
-    /* =====================================================
-       BELUM ADA DATA USER
-    ===================================================== */
+    const saved = localStorage.getItem(USER_STORAGE_KEY);
 
     if (!saved) {
       localStorage.setItem(
@@ -63,13 +57,9 @@ export function getUsers() {
       return DEFAULT_USERS;
     }
 
-    const parsedUsers = JSON.parse(saved);
+    const users = JSON.parse(saved);
 
-    /* =====================================================
-       DATA TIDAK VALID
-    ===================================================== */
-
-    if (!Array.isArray(parsedUsers)) {
+    if (!Array.isArray(users)) {
       localStorage.setItem(
         USER_STORAGE_KEY,
         JSON.stringify(DEFAULT_USERS)
@@ -78,141 +68,19 @@ export function getUsers() {
       return DEFAULT_USERS;
     }
 
-    let users = [...parsedUsers];
-
-    /* =====================================================
-       PASTIKAN ADMIN ADA
-    ===================================================== */
-
-    const adminIndex = users.findIndex(
-      (user) =>
-        user.email?.toLowerCase() ===
-        "admin@gmail.com"
-    );
-
-    if (adminIndex === -1) {
-      users.unshift({
-        id: 1,
-        name: "Admin",
-        email: "admin@gmail.com",
-        password: "123456",
-        role: "admin",
-      });
-    } else {
-      /*
-       * Paksa akun admin tetap menjadi:
-       * Admin / admin / admin@gmail.com
-       */
-
-      users[adminIndex] = {
-        ...users[adminIndex],
-        id: 1,
-        name: "Admin",
-        email: "admin@gmail.com",
-        password:
-          users[adminIndex].password ||
-          "123456",
-        role: "admin",
-      };
-    }
-
-    /* =====================================================
-       PASTIKAN HAFIDH USER
-       
-       Kalau sebelumnya Hafidh tersimpan sebagai admin,
-       otomatis ubah menjadi user.
-    ===================================================== */
-
-    users = users.map((user) => {
-      const email =
-        user.email?.toLowerCase();
-
-      if (
-        email === "hafidhsya@gmail.com" ||
-        email === "hafidh@gmail.com"
-      ) {
-        return {
-          ...user,
-          id: 2,
-          name: "Hafidh",
-          email: "hafidhsya@gmail.com",
-          role: "user",
-        };
-      }
-
-      return user;
-    });
-
-    /* =====================================================
-       PASTIKAN USER DEFAULT ADA
-    ===================================================== */
-
-    DEFAULT_USERS.forEach(
-      (defaultUser) => {
-        const exists = users.some(
-          (user) =>
-            user.email?.toLowerCase() ===
-            defaultUser.email.toLowerCase()
-        );
-
-        if (!exists) {
-          users.push(defaultUser);
-        }
-      }
-    );
-
-    /* =====================================================
-       HAPUS DUPLIKAT EMAIL
-       
-       Mencegah satu email muncul lebih dari sekali.
-    ===================================================== */
-
-    const uniqueUsers = [];
-
-    users.forEach((user) => {
-      const email =
-        user.email?.toLowerCase();
-
-      const alreadyExists =
-        uniqueUsers.some(
-          (item) =>
-            item.email?.toLowerCase() ===
-            email
-        );
-
-      if (!alreadyExists) {
-        uniqueUsers.push(user);
-      }
-    });
-
-    /* =====================================================
-       SIMPAN DATA USER TERBARU
-    ===================================================== */
-
-    localStorage.setItem(
-      USER_STORAGE_KEY,
-      JSON.stringify(uniqueUsers)
-    );
-
-    return uniqueUsers;
-  } catch {
-    localStorage.setItem(
-      USER_STORAGE_KEY,
-      JSON.stringify(DEFAULT_USERS)
-    );
-
+    return users;
+  } catch (error) {
+    console.error("Gagal mengambil users:", error);
     return DEFAULT_USERS;
   }
 }
 
-/* =========================================================
-   SAVE USERS
-========================================================= */
+// =========================================================
+// SAVE USERS
+// =========================================================
 
 export function saveUsers(users) {
-  if (!Array.isArray(users)) {
-    return;
-  }
+  if (!Array.isArray(users)) return;
 
   localStorage.setItem(
     USER_STORAGE_KEY,
@@ -220,9 +88,9 @@ export function saveUsers(users) {
   );
 }
 
-/* =========================================================
-   GET CURRENT USER
-========================================================= */
+// =========================================================
+// GET CURRENT USER
+// =========================================================
 
 export function getCurrentUser() {
   try {
@@ -230,50 +98,22 @@ export function getCurrentUser() {
       CURRENT_USER_STORAGE_KEY
     );
 
-    /* =====================================================
-       BELUM LOGIN
-    ===================================================== */
-
-    if (!saved) {
-      return null;
-    }
+    if (!saved) return null;
 
     const currentUser = JSON.parse(saved);
 
-    if (!currentUser) {
+    if (!currentUser || currentUser.id == null) {
       return null;
     }
 
-    /* =====================================================
-       AMBIL DATA USER TERBARU
-    ===================================================== */
-
+    // Ambil data user terbaru dari daftar users
     const users = getUsers();
 
-    /*
-     * Cari berdasarkan ID terlebih dahulu.
-     * Kalau tidak ditemukan, cari berdasarkan email.
-     */
-
-    let latestUser = users.find(
-      (user) =>
-        String(user.id) ===
-        String(currentUser.id)
+    const freshUser = users.find(
+      (user) => String(user.id) === String(currentUser.id)
     );
 
-    if (!latestUser) {
-      latestUser = users.find(
-        (user) =>
-          user.email?.toLowerCase() ===
-          currentUser.email?.toLowerCase()
-      );
-    }
-
-    /* =====================================================
-       USER SUDAH TIDAK ADA
-    ===================================================== */
-
-    if (!latestUser) {
+    if (!freshUser) {
       localStorage.removeItem(
         CURRENT_USER_STORAGE_KEY
       );
@@ -281,44 +121,24 @@ export function getCurrentUser() {
       return null;
     }
 
-    /* =====================================================
-       CURRENT USER SELALU MENGIKUTI DATA TERBARU
-    ===================================================== */
-
-    const updatedCurrentUser = {
-      id: latestUser.id,
-      name: latestUser.name,
-      email: latestUser.email,
-      role: latestUser.role,
+    return {
+      id: freshUser.id,
+      name: freshUser.name,
+      email: freshUser.email,
+      role: freshUser.role,
     };
-
-    localStorage.setItem(
-      CURRENT_USER_STORAGE_KEY,
-      JSON.stringify(updatedCurrentUser)
-    );
-
-    return updatedCurrentUser;
-  } catch {
-    localStorage.removeItem(
-      CURRENT_USER_STORAGE_KEY
-    );
-
+  } catch (error) {
+    console.error("Gagal mengambil current user:", error);
     return null;
   }
 }
 
-/* =========================================================
-   SET CURRENT USER
-========================================================= */
+// =========================================================
+// SET CURRENT USER
+// =========================================================
 
 export function setCurrentUser(user) {
-  if (!user) {
-    localStorage.removeItem(
-      CURRENT_USER_STORAGE_KEY
-    );
-
-    return;
-  }
+  if (!user || user.id == null) return;
 
   const currentUser = {
     id: user.id,
@@ -331,11 +151,14 @@ export function setCurrentUser(user) {
     CURRENT_USER_STORAGE_KEY,
     JSON.stringify(currentUser)
   );
+
+  // Pastikan storage user tersedia
+  initializeUserData(user.id);
 }
 
-/* =========================================================
-   LOGOUT
-========================================================= */
+// =========================================================
+// LOGOUT
+// =========================================================
 
 export function logoutUser() {
   localStorage.removeItem(
@@ -343,90 +166,71 @@ export function logoutUser() {
   );
 }
 
-/* =========================================================
-   USER STORAGE KEY
-========================================================= */
+// =========================================================
+// USER STORAGE KEY
+// =========================================================
 
-export function getUserStorageKey(
-  type,
-  userId
-) {
+export function getUserStorageKey(type, userId) {
   return `cashflow_${type}_user_${userId}`;
 }
 
-/* =========================================================
-   GET USER DATA
-========================================================= */
+// =========================================================
+// GET USER DATA
+// =========================================================
 
-export function getUserData(
-  type,
-  userId
-) {
-  if (!userId) {
-    return [];
-  }
+export function getUserData(type, userId) {
+  if (userId == null) return [];
 
   try {
-    const key = getUserStorageKey(
-      type,
-      userId
-    );
+    const key = getUserStorageKey(type, userId);
 
-    const saved =
-      localStorage.getItem(key);
+    const saved = localStorage.getItem(key);
 
-    if (!saved) {
-      return [];
-    }
+    if (!saved) return [];
 
     const data = JSON.parse(saved);
 
-    return Array.isArray(data)
-      ? data
-      : [];
-  } catch {
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error(
+      `Gagal mengambil data ${type} user ${userId}:`,
+      error
+    );
+
     return [];
   }
 }
 
-/* =========================================================
-   SAVE USER DATA
-========================================================= */
+// =========================================================
+// SAVE USER DATA
+// =========================================================
 
-export function saveUserData(
-  type,
-  userId,
-  data
-) {
-  if (!userId) {
-    return;
+export function saveUserData(type, userId, data) {
+  if (userId == null) return;
+
+  if (!Array.isArray(data)) return;
+
+  try {
+    const key = getUserStorageKey(type, userId);
+
+    localStorage.setItem(
+      key,
+      JSON.stringify(data)
+    );
+  } catch (error) {
+    console.error(
+      `Gagal menyimpan data ${type} user ${userId}:`,
+      error
+    );
   }
-
-  if (!Array.isArray(data)) {
-    return;
-  }
-
-  const key = getUserStorageKey(
-    type,
-    userId
-  );
-
-  localStorage.setItem(
-    key,
-    JSON.stringify(data)
-  );
 }
 
-/* =========================================================
-   INITIALIZE USER DATA
-========================================================= */
+// =========================================================
+// INITIALIZE USER DATA
+// =========================================================
 
-export function initializeUserData(
-  userId
-) {
-  if (!userId) {
-    return;
-  }
+export function initializeUserData(userId) {
+  if (userId == null) return;
 
   const types = [
     "income",
@@ -436,15 +240,9 @@ export function initializeUserData(
   ];
 
   types.forEach((type) => {
-    const key = getUserStorageKey(
-      type,
-      userId
-    );
+    const key = getUserStorageKey(type, userId);
 
-    if (
-      localStorage.getItem(key) ===
-      null
-    ) {
+    if (localStorage.getItem(key) === null) {
       localStorage.setItem(
         key,
         JSON.stringify([])
@@ -453,16 +251,12 @@ export function initializeUserData(
   });
 }
 
-/* =========================================================
-   RESET USER DATA
-========================================================= */
+// =========================================================
+// RESET USER DATA
+// =========================================================
 
-export function resetUserData(
-  userId
-) {
-  if (!userId) {
-    return;
-  }
+export function resetUserData(userId) {
+  if (userId == null) return;
 
   const types = [
     "income",
@@ -472,10 +266,7 @@ export function resetUserData(
   ];
 
   types.forEach((type) => {
-    const key = getUserStorageKey(
-      type,
-      userId
-    );
+    const key = getUserStorageKey(type, userId);
 
     localStorage.setItem(
       key,
@@ -484,16 +275,12 @@ export function resetUserData(
   });
 }
 
-/* =========================================================
-   DELETE USER DATA
-========================================================= */
+// =========================================================
+// DELETE USER DATA
+// =========================================================
 
-export function deleteUserData(
-  userId
-) {
-  if (!userId) {
-    return;
-  }
+export function deleteUserData(userId) {
+  if (userId == null) return;
 
   const types = [
     "income",
@@ -503,17 +290,23 @@ export function deleteUserData(
   ];
 
   types.forEach((type) => {
-    const key = getUserStorageKey(
-      type,
-      userId
-    );
+    const key = getUserStorageKey(type, userId);
 
     localStorage.removeItem(key);
   });
 }
 
-/* =========================================================
-   EXPORT DEFAULT USERS
-========================================================= */
+// =========================================================
+// DELETE OLD GLOBAL STORAGE
+// =========================================================
+
+export function deleteLegacyData() {
+  localStorage.removeItem("cashflow_income");
+  localStorage.removeItem("cashflow_expense");
+}
+
+// =========================================================
+// EXPORT
+// =========================================================
 
 export { DEFAULT_USERS };

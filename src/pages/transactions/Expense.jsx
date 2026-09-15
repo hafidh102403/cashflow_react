@@ -10,8 +10,28 @@ import {
   Wallet,
 } from "lucide-react";
 
-const STORAGE_KEY = "cashflow_expense";
-const INCOME_STORAGE_KEY = "cashflow_income";
+import {
+  getCurrentUser,
+  getUserData,
+  saveUserData,
+  initializeUserData,
+} from "../../utils/storage";
+
+/* =========================================================
+   KATEGORI PENGELUARAN
+========================================================= */
+
+const EXPENSE_CATEGORIES = [
+  "Makanan",
+  "Transportasi",
+  "Belanja",
+  "Tagihan",
+  "Hiburan",
+  "Kesehatan",
+  "Pendidikan",
+  "Kebutuhan Rumah",
+  "Lainnya",
+];
 
 /* =========================================================
    FORMAT RUPIAH
@@ -40,55 +60,52 @@ function formatDate(date) {
 }
 
 /* =========================================================
-   GET STORAGE DATA
-========================================================= */
-
-function getStorageData(key) {
-  try {
-    const saved = localStorage.getItem(key);
-
-    if (!saved) {
-      return [];
-    }
-
-    const parsed = JSON.parse(saved);
-
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-/* =========================================================
    EXPENSE
 ========================================================= */
 
 function Expense() {
-  /* =====================================================
+  /* =======================================================
+     CURRENT USER
+  ======================================================= */
+
+  const currentUser = getCurrentUser();
+
+  /* =======================================================
      TRANSACTIONS
-  ===================================================== */
+
+     DATA BERDASARKAN USER ID
+  ======================================================= */
 
   const [transactions, setTransactions] = useState(() => {
-    return getStorageData(STORAGE_KEY);
+    if (!currentUser) {
+      return [];
+    }
+
+    initializeUserData(currentUser.id);
+
+    return getUserData(
+      "expense",
+      currentUser.id
+    );
   });
 
-  /* =====================================================
+  /* =======================================================
      SEARCH
-  ===================================================== */
+  ======================================================= */
 
   const [search, setSearch] = useState("");
 
-  /* =====================================================
+  /* =======================================================
      MODAL
-  ===================================================== */
+  ======================================================= */
 
   const [modalOpen, setModalOpen] = useState(false);
 
   const [editingId, setEditingId] = useState(null);
 
-  /* =====================================================
+  /* =======================================================
      FORM
-  ===================================================== */
+  ======================================================= */
 
   const [form, setForm] = useState({
     title: "",
@@ -98,20 +115,23 @@ function Expense() {
     description: "",
   });
 
-  /* =====================================================
-     SIMPAN PENGELUARAN
-  ===================================================== */
+  /* =======================================================
+     SIMPAN PENGELUARAN PER USER
+  ======================================================= */
 
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(transactions)
-    );
-  }, [transactions]);
+    if (!currentUser) return;
 
-  /* =====================================================
+    saveUserData(
+      "expense",
+      currentUser.id,
+      transactions
+    );
+  }, [transactions, currentUser]);
+
+  /* =======================================================
      FILTER
-  ===================================================== */
+  ======================================================= */
 
   const filteredTransactions = useMemo(() => {
     const keyword = search.toLowerCase().trim();
@@ -133,43 +153,50 @@ function Expense() {
     );
   }, [transactions, search]);
 
-  /* =====================================================
+  /* =======================================================
      TOTAL PENGELUARAN
-  ===================================================== */
+  ======================================================= */
 
   const totalExpense = useMemo(() => {
     return transactions.reduce(
-      (total, item) => total + Number(item.amount || 0),
+      (total, item) =>
+        total + Number(item.amount || 0),
       0
     );
   }, [transactions]);
 
-  /* =====================================================
-     TOTAL PEMASUKAN
-  ===================================================== */
+  /* =======================================================
+     TOTAL PEMASUKAN USER
+  ======================================================= */
 
   const totalIncome = useMemo(() => {
+    if (!currentUser) {
+      return 0;
+    }
+
     const incomeTransactions =
-      getStorageData(INCOME_STORAGE_KEY);
+      getUserData(
+        "income",
+        currentUser.id
+      );
 
     return incomeTransactions.reduce(
-      (total, item) => total + Number(item.amount || 0),
+      (total, item) =>
+        total + Number(item.amount || 0),
       0
     );
-  }, [transactions]);
+  }, [transactions, currentUser]);
 
-  /* =====================================================
+  /* =======================================================
      SISA SALDO
-     
-     Rumus:
-     Total Pemasukan - Total Pengeluaran
-  ===================================================== */
+  ======================================================= */
 
-  const remainingBalance = totalIncome - totalExpense;
+  const remainingBalance =
+    totalIncome - totalExpense;
 
-  /* =====================================================
+  /* =======================================================
      OPEN ADD MODAL
-  ===================================================== */
+  ======================================================= */
 
   function openAddModal() {
     setEditingId(null);
@@ -177,7 +204,9 @@ function Expense() {
     setForm({
       title: "",
       category: "",
-      date: new Date().toISOString().split("T")[0],
+      date: new Date()
+        .toISOString()
+        .split("T")[0],
       amount: "",
       description: "",
     });
@@ -185,9 +214,9 @@ function Expense() {
     setModalOpen(true);
   }
 
-  /* =====================================================
+  /* =======================================================
      OPEN EDIT MODAL
-  ===================================================== */
+  ======================================================= */
 
   function openEditModal(item) {
     setEditingId(item.id);
@@ -203,9 +232,9 @@ function Expense() {
     setModalOpen(true);
   }
 
-  /* =====================================================
+  /* =======================================================
      CLOSE MODAL
-  ===================================================== */
+  ======================================================= */
 
   function closeModal() {
     setModalOpen(false);
@@ -220,9 +249,9 @@ function Expense() {
     });
   }
 
-  /* =====================================================
+  /* =======================================================
      FORM CHANGE
-  ===================================================== */
+  ======================================================= */
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -233,22 +262,25 @@ function Expense() {
     }));
   }
 
-  /* =====================================================
+  /* =======================================================
      SAVE
-  ===================================================== */
+  ======================================================= */
 
   function handleSubmit(event) {
     event.preventDefault();
 
-    /* VALIDASI */
+    if (!currentUser) {
+      alert("User belum login.");
+      return;
+    }
 
     if (!form.title.trim()) {
       alert("Nama transaksi wajib diisi.");
       return;
     }
 
-    if (!form.category.trim()) {
-      alert("Kategori wajib diisi.");
+    if (!form.category) {
+      alert("Kategori wajib dipilih.");
       return;
     }
 
@@ -257,7 +289,10 @@ function Expense() {
       return;
     }
 
-    if (!form.amount || Number(form.amount) <= 0) {
+    if (
+      !form.amount ||
+      Number(form.amount) <= 0
+    ) {
       alert("Nominal harus lebih dari 0.");
       return;
     }
@@ -273,10 +308,11 @@ function Expense() {
             ? {
                 ...item,
                 title: form.title.trim(),
-                category: form.category.trim(),
+                category: form.category,
                 date: form.date,
                 amount: Number(form.amount),
-                description: form.description.trim(),
+                description:
+                  form.description.trim(),
               }
             : item
         )
@@ -291,10 +327,11 @@ function Expense() {
       const newTransaction = {
         id: Date.now(),
         title: form.title.trim(),
-        category: form.category.trim(),
+        category: form.category,
         date: form.date,
         amount: Number(form.amount),
-        description: form.description.trim(),
+        description:
+          form.description.trim(),
       };
 
       setTransactions((prev) => [
@@ -306,9 +343,9 @@ function Expense() {
     closeModal();
   }
 
-  /* =====================================================
+  /* =======================================================
      DELETE
-  ===================================================== */
+  ======================================================= */
 
   function handleDelete(id) {
     const confirmed = window.confirm(
@@ -322,9 +359,9 @@ function Expense() {
     );
   }
 
-  /* =====================================================
+  /* =======================================================
      RENDER
-  ===================================================== */
+  ======================================================= */
 
   return (
     <div className="transaction-page">
@@ -344,6 +381,7 @@ function Expense() {
         </div>
 
         <button
+          type="button"
           className="transaction-add-button expense-button"
           onClick={openAddModal}
         >
@@ -355,7 +393,6 @@ function Expense() {
         </button>
 
       </div>
-
 
       {/* =================================================
           SUMMARY
@@ -385,7 +422,6 @@ function Expense() {
 
         </div>
 
-
         {/* SISA SALDO */}
 
         <div className="transaction-summary-card">
@@ -401,13 +437,14 @@ function Expense() {
             </span>
 
             <strong>
-              {formatRupiah(remainingBalance)}
+              {formatRupiah(
+                remainingBalance
+              )}
             </strong>
 
           </div>
 
         </div>
-
 
         {/* JUMLAH TRANSAKSI */}
 
@@ -433,14 +470,11 @@ function Expense() {
 
       </div>
 
-
       {/* =================================================
-          TABLE CARD
+          TABLE
       ================================================= */}
 
       <div className="transaction-card">
-
-        {/* TOOLBAR */}
 
         <div className="transaction-toolbar">
 
@@ -460,9 +494,6 @@ function Expense() {
           </div>
 
         </div>
-
-
-        {/* TABLE */}
 
         <div className="transaction-table-wrapper">
 
@@ -489,8 +520,6 @@ function Expense() {
 
                   <tr key={item.id}>
 
-                    {/* TANGGAL */}
-
                     <td>
 
                       <div className="transaction-date">
@@ -503,9 +532,6 @@ function Expense() {
 
                     </td>
 
-
-                    {/* TRANSAKSI */}
-
                     <td>
 
                       <strong>
@@ -513,9 +539,6 @@ function Expense() {
                       </strong>
 
                     </td>
-
-
-                    {/* KATEGORI */}
 
                     <td>
 
@@ -525,34 +548,24 @@ function Expense() {
 
                     </td>
 
-
-                    {/* NOMINAL */}
-
                     <td>
 
                       <strong className="expense-value">
-
                         - {formatRupiah(item.amount)}
-
                       </strong>
 
                     </td>
 
-
-                    {/* DESKRIPSI */}
-
                     <td>
                       {item.description || "-"}
                     </td>
-
-
-                    {/* AKSI */}
 
                     <td>
 
                       <div className="transaction-actions">
 
                         <button
+                          type="button"
                           className="transaction-edit-button"
                           onClick={() =>
                             openEditModal(item)
@@ -562,8 +575,8 @@ function Expense() {
                           <Pencil size={13} />
                         </button>
 
-
                         <button
+                          type="button"
                           className="transaction-delete-button"
                           onClick={() =>
                             handleDelete(item.id)
@@ -614,7 +627,6 @@ function Expense() {
 
       </div>
 
-
       {/* =================================================
           MODAL
       ================================================= */}
@@ -624,8 +636,6 @@ function Expense() {
         <div className="transaction-modal-overlay">
 
           <div className="transaction-modal">
-
-            {/* HEADER MODAL */}
 
             <div className="transaction-modal-header">
 
@@ -643,7 +653,6 @@ function Expense() {
 
               </div>
 
-
               <button
                 className="transaction-modal-close"
                 onClick={closeModal}
@@ -654,14 +663,9 @@ function Expense() {
 
             </div>
 
-
-            {/* FORM */}
-
             <form onSubmit={handleSubmit}>
 
               <div className="transaction-form-grid">
-
-                {/* NAMA TRANSAKSI */}
 
                 <div className="transaction-form-group">
 
@@ -675,12 +679,10 @@ function Expense() {
                     placeholder="Contoh: Belanja Bulanan"
                     value={form.title}
                     onChange={handleChange}
+                    autoComplete="off"
                   />
 
                 </div>
-
-
-                {/* KATEGORI */}
 
                 <div className="transaction-form-group">
 
@@ -688,18 +690,33 @@ function Expense() {
                     Kategori
                   </label>
 
-                  <input
+                  <select
                     name="category"
-                    type="text"
-                    placeholder="Contoh: Kebutuhan"
                     value={form.category}
                     onChange={handleChange}
-                  />
+                    className="transaction-category-select"
+                  >
+
+                    <option value="">
+                      Pilih kategori
+                    </option>
+
+                    {EXPENSE_CATEGORIES.map(
+                      (category) => (
+
+                        <option
+                          key={category}
+                          value={category}
+                        >
+                          {category}
+                        </option>
+
+                      )
+                    )}
+
+                  </select>
 
                 </div>
-
-
-                {/* TANGGAL */}
 
                 <div className="transaction-form-group">
 
@@ -716,28 +733,29 @@ function Expense() {
 
                 </div>
 
-
-                {/* NOMINAL */}
-
                 <div className="transaction-form-group">
 
                   <label>
                     Nominal
                   </label>
 
-                  <input
-                    name="amount"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={form.amount}
-                    onChange={handleChange}
-                  />
+                  <div className="transaction-amount-input">
+
+                    <span>Rp</span>
+
+                    <input
+                      name="amount"
+                      type="number"
+                      min="1"
+                      step="1"
+                      placeholder="0"
+                      value={form.amount}
+                      onChange={handleChange}
+                    />
+
+                  </div>
 
                 </div>
-
-
-                {/* DESKRIPSI */}
 
                 <div className="transaction-form-group full">
 
@@ -757,9 +775,6 @@ function Expense() {
 
               </div>
 
-
-              {/* FOOTER */}
-
               <div className="transaction-modal-footer">
 
                 <button
@@ -769,7 +784,6 @@ function Expense() {
                 >
                   Batal
                 </button>
-
 
                 <button
                   type="submit"

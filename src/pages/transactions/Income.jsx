@@ -8,52 +8,45 @@ import {
   X,
   CalendarDays,
   Wallet,
+  ChevronDown,
 } from "lucide-react";
 
-const STORAGE_KEY = "cashflow_income";
+import {
+  getCurrentUser,
+  getUserData,
+  saveUserData,
+  initializeUserData,
+} from "../../utils/storage";
 
-const initialData = [
-  {
-    id: 1,
-    title: "Gaji Bulanan",
-    category: "Gaji",
-    date: "2026-09-01",
-    amount: 8500000,
-    description: "Gaji bulanan",
-  },
-  {
-    id: 2,
-    title: "Freelance Website",
-    category: "Freelance",
-    date: "2026-09-03",
-    amount: 2500000,
-    description: "Project website",
-  },
-  {
-    id: 3,
-    title: "Bonus",
-    category: "Bonus",
-    date: "2026-09-07",
-    amount: 1500000,
-    description: "Bonus pekerjaan",
-  },
-  {
-    id: 4,
-    title: "Penjualan",
-    category: "Penjualan",
-    date: "2026-09-11",
-    amount: 750000,
-    description: "Hasil penjualan",
-  },
+/* =========================================================
+   KATEGORI PEMASUKAN
+========================================================= */
+
+const INCOME_CATEGORIES = [
+  "Gaji",
+  "Freelance",
+  "Bonus",
+  "Penjualan",
+  "Investasi",
+  "Hadiah",
+  "Lainnya",
 ];
+
+/* =========================================================
+   FORMAT RUPIAH
+========================================================= */
 
 function formatRupiah(value) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(Number(value) || 0);
 }
+
+/* =========================================================
+   FORMAT DATE
+========================================================= */
 
 function formatDate(date) {
   if (!date) return "-";
@@ -65,19 +58,53 @@ function formatDate(date) {
   }).format(new Date(`${date}T00:00:00`));
 }
 
+/* =========================================================
+   INCOME
+========================================================= */
+
 function Income() {
+  /* =======================================================
+     CURRENT USER
+  ======================================================= */
+
+  const currentUser = getCurrentUser();
+
+  /* =======================================================
+     TRANSACTIONS
+
+     DATA SEKARANG BERDASARKAN USER ID
+  ======================================================= */
+
   const [transactions, setTransactions] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : initialData;
-    } catch {
-      return initialData;
+    if (!currentUser) {
+      return [];
     }
+
+    initializeUserData(currentUser.id);
+
+    return getUserData(
+      "income",
+      currentUser.id
+    );
   });
 
+  /* =======================================================
+     SEARCH
+  ======================================================= */
+
   const [search, setSearch] = useState("");
+
+  /* =======================================================
+     MODAL
+  ======================================================= */
+
   const [modalOpen, setModalOpen] = useState(false);
+
   const [editingId, setEditingId] = useState(null);
+
+  /* =======================================================
+     FORM
+  ======================================================= */
 
   const [form, setForm] = useState({
     title: "",
@@ -87,20 +114,23 @@ function Income() {
     description: "",
   });
 
-  /* =====================================================
-     SIMPAN DATA
-  ===================================================== */
+  /* =======================================================
+     SIMPAN DATA PER USER
+  ======================================================= */
 
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(transactions)
-    );
-  }, [transactions]);
+    if (!currentUser) return;
 
-  /* =====================================================
+    saveUserData(
+      "income",
+      currentUser.id,
+      transactions
+    );
+  }, [transactions, currentUser]);
+
+  /* =======================================================
      FILTER
-  ===================================================== */
+  ======================================================= */
 
   const filteredTransactions = useMemo(() => {
     const keyword = search.toLowerCase().trim();
@@ -122,20 +152,21 @@ function Income() {
     );
   }, [transactions, search]);
 
-  /* =====================================================
-     TOTAL
-  ===================================================== */
+  /* =======================================================
+     TOTAL PEMASUKAN
+  ======================================================= */
 
   const totalIncome = useMemo(() => {
     return transactions.reduce(
-      (total, item) => total + Number(item.amount),
+      (total, item) =>
+        total + Number(item.amount || 0),
       0
     );
   }, [transactions]);
 
-  /* =====================================================
-     TAMBAH
-  ===================================================== */
+  /* =======================================================
+     OPEN ADD MODAL
+  ======================================================= */
 
   function openAddModal() {
     setEditingId(null);
@@ -143,7 +174,9 @@ function Income() {
     setForm({
       title: "",
       category: "",
-      date: new Date().toISOString().split("T")[0],
+      date: new Date()
+        .toISOString()
+        .split("T")[0],
       amount: "",
       description: "",
     });
@@ -151,36 +184,44 @@ function Income() {
     setModalOpen(true);
   }
 
-  /* =====================================================
-     EDIT
-  ===================================================== */
+  /* =======================================================
+     OPEN EDIT MODAL
+  ======================================================= */
 
   function openEditModal(item) {
     setEditingId(item.id);
 
     setForm({
-      title: item.title,
-      category: item.category,
-      date: item.date,
-      amount: item.amount,
+      title: item.title || "",
+      category: item.category || "",
+      date: item.date || "",
+      amount: item.amount || "",
       description: item.description || "",
     });
 
     setModalOpen(true);
   }
 
-  /* =====================================================
-     TUTUP
-  ===================================================== */
+  /* =======================================================
+     CLOSE MODAL
+  ======================================================= */
 
   function closeModal() {
     setModalOpen(false);
     setEditingId(null);
+
+    setForm({
+      title: "",
+      category: "",
+      date: "",
+      amount: "",
+      description: "",
+    });
   }
 
-  /* =====================================================
-     FORM
-  ===================================================== */
+  /* =======================================================
+     HANDLE FORM
+  ======================================================= */
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -191,20 +232,25 @@ function Income() {
     }));
   }
 
-  /* =====================================================
-     SIMPAN
-  ===================================================== */
+  /* =======================================================
+     SUBMIT
+  ======================================================= */
 
   function handleSubmit(event) {
     event.preventDefault();
+
+    if (!currentUser) {
+      alert("User belum login.");
+      return;
+    }
 
     if (!form.title.trim()) {
       alert("Nama transaksi wajib diisi.");
       return;
     }
 
-    if (!form.category.trim()) {
-      alert("Kategori wajib diisi.");
+    if (!form.category) {
+      alert("Kategori wajib dipilih.");
       return;
     }
 
@@ -213,10 +259,17 @@ function Income() {
       return;
     }
 
-    if (!form.amount || Number(form.amount) <= 0) {
+    if (
+      !form.amount ||
+      Number(form.amount) <= 0
+    ) {
       alert("Nominal harus lebih dari 0.");
       return;
     }
+
+    /* ===================================================
+       EDIT
+    =================================================== */
 
     if (editingId) {
       setTransactions((prev) =>
@@ -225,22 +278,30 @@ function Income() {
             ? {
                 ...item,
                 title: form.title.trim(),
-                category: form.category.trim(),
+                category: form.category,
                 date: form.date,
                 amount: Number(form.amount),
-                description: form.description.trim(),
+                description:
+                  form.description.trim(),
               }
             : item
         )
       );
-    } else {
+    }
+
+    /* ===================================================
+       TAMBAH
+    =================================================== */
+
+    else {
       const newTransaction = {
         id: Date.now(),
         title: form.title.trim(),
-        category: form.category.trim(),
+        category: form.category,
         date: form.date,
         amount: Number(form.amount),
-        description: form.description.trim(),
+        description:
+          form.description.trim(),
       };
 
       setTransactions((prev) => [
@@ -252,9 +313,9 @@ function Income() {
     closeModal();
   }
 
-  /* =====================================================
-     HAPUS
-  ===================================================== */
+  /* =======================================================
+     DELETE
+  ======================================================= */
 
   function handleDelete(id) {
     const confirmed = window.confirm(
@@ -267,6 +328,10 @@ function Income() {
       prev.filter((item) => item.id !== id)
     );
   }
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
     <div className="transaction-page">
@@ -291,7 +356,10 @@ function Income() {
           onClick={openAddModal}
         >
           <Plus size={15} />
-          <span>Tambah Pemasukan</span>
+
+          <span>
+            Tambah Pemasukan
+          </span>
         </button>
 
       </div>
@@ -309,7 +377,9 @@ function Income() {
           </div>
 
           <div>
-            <span>Total Pemasukan</span>
+            <span>
+              Total Pemasukan
+            </span>
 
             <strong>
               {formatRupiah(totalIncome)}
@@ -325,7 +395,9 @@ function Income() {
           </div>
 
           <div>
-            <span>Jumlah Transaksi</span>
+            <span>
+              Jumlah Transaksi
+            </span>
 
             <strong>
               {transactions.length}
@@ -495,11 +567,10 @@ function Income() {
             }
           >
 
-            {/* HEADER */}
-
             <div className="income-modal-header">
 
               <div>
+
                 <h2>
                   {editingId
                     ? "Edit Pemasukan"
@@ -509,6 +580,7 @@ function Income() {
                 <p>
                   Masukkan informasi transaksi.
                 </p>
+
               </div>
 
               <button
@@ -522,16 +594,12 @@ function Income() {
 
             </div>
 
-            {/* FORM */}
-
             <form
               className="income-modal-form"
               onSubmit={handleSubmit}
             >
 
               <div className="income-form-grid">
-
-                {/* NAMA */}
 
                 <div className="income-form-group">
 
@@ -551,27 +619,46 @@ function Income() {
 
                 </div>
 
-                {/* KATEGORI */}
-
                 <div className="income-form-group">
 
                   <label htmlFor="income-category">
                     Kategori
                   </label>
 
-                  <input
-                    id="income-category"
-                    name="category"
-                    type="text"
-                    placeholder="Contoh: Gaji"
-                    value={form.category}
-                    onChange={handleChange}
-                    autoComplete="off"
-                  />
+                  <div className="income-select-wrapper">
+
+                    <select
+                      id="income-category"
+                      name="category"
+                      value={form.category}
+                      onChange={handleChange}
+                    >
+
+                      <option value="">
+                        Pilih Kategori
+                      </option>
+
+                      {INCOME_CATEGORIES.map(
+                        (category) => (
+                          <option
+                            key={category}
+                            value={category}
+                          >
+                            {category}
+                          </option>
+                        )
+                      )}
+
+                    </select>
+
+                    <ChevronDown
+                      size={16}
+                      className="income-select-icon"
+                    />
+
+                  </div>
 
                 </div>
-
-                {/* TANGGAL */}
 
                 <div className="income-form-group">
 
@@ -594,8 +681,6 @@ function Income() {
                   </div>
 
                 </div>
-
-                {/* NOMINAL */}
 
                 <div className="income-form-group">
 
@@ -622,8 +707,6 @@ function Income() {
 
                 </div>
 
-                {/* DESKRIPSI */}
-
                 <div className="income-form-group income-form-full">
 
                   <label htmlFor="income-description">
@@ -642,8 +725,6 @@ function Income() {
                 </div>
 
               </div>
-
-              {/* FOOTER */}
 
               <div className="income-modal-footer">
 
